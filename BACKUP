@@ -1,0 +1,119 @@
+=========================================================== 
+-- Script que retorna quanto tempo e porcentagem para finalizar um Backup ou Restore
+=========================================================== 
+
+
+USE MASTER
+go
+
+SELECT start_time,
+       percent_complete,
+       command,
+       b.name AS DatabaseName,
+       DATEADD(ms,estimated_completion_time,GETDATE()) AS StimatedCompletionTime,
+      (estimated_completion_time/1000/60) AS MinutesToFinish
+FROM sys.dm_exec_requests a
+INNER JOIN sys.databases b ON a.database_id = b.database_id
+WHERE command LIKE '%restore%'
+OR command LIKE '%backup%'
+AND estimated_completion_time > 0
+
+select DATEDIFF (minute, fim, getdate()) "Ultimo BKP EXEC h� (minutos)", * from (
+select max (backup_start_date) inicio, max (backup_finish_date) fim, database_name, type
+from msdb..backupset where type = 'l'
+group by database_name, type) a
+
+
+SELECT
+
+SERVERPROPERTY('Servername' ) AS 'Servidor' ,
+
+msdb.dbo .backupset. database_name As 'Database',
+
+CASE msdb .. backupset. type
+      WHEN 'D' THEN 'Full'
+      WHEN 'L' THEN 'Log'
+      WHEN 'I' THEN 'Diferencial'
+      WHEN 'F' THEN 'File ou Filegroup'
+      WHEN 'G' THEN 'Diferencial Arquivo'
+      WHEN 'P' THEN 'Parcial'
+      WHEN 'Q' THEN 'Diferencial Parcial'
+      END AS 'Tipo do Backup',
+
+msdb.dbo .backupset. backup_start_date                 As 'Data Execucao' ,
+msdb.dbo .backupset. backup_finish_date                As 'Data Encerramento' ,
+--msdb.dbo.backupset.expiration_date                   As 'Data de Expiracao',
+(msdb. dbo.backupset .backup_size / 1024)               As 'Tamanho do  Backup em MBs',
+--msdb.dbo.backupmediafamily.logical_device_name As 'Dispositivo ou Local de Backup',
+--msdb.dbo.backupset.description As 'Descricao',
+
+
+--Case msdb . dbo. backupset .compatibility_level
+--      When 80 Then 'SQL Server 2000'
+--      When 90 Then 'SQL Server 2005'
+--      When 100 Then 'SQL Server 2008 ou SQL Server 2008 R2'
+--      When 110 Then 'SQL Server 2012'
+--      End As 'Nvel de Compatibilidade',
+
+--msdb.dbo .backupset. name AS 'Backup Set',
+msdb.dbo .backupmediafamily. physical_device_name As 'Caminho do Arquivo'
+
+FROM
+
+msdb.dbo .backupmediafamily INNER JOIN msdb . dbo. backupset
+
+ON msdb . dbo. backupmediafamily .media_set_id = msdb.dbo .backupset. media_set_id
+
+WHERE
+
+(CONVERT( datetime, msdb .dbo. backupset.backup_start_date , 103) >= GETDATE() - 10)
+--AND
+--msdb.dbo .backupset. database_name = 'MES_VSData'
+AND
+msdb.dbo .backupset. database_name <> 'MASTER'
+AND
+msdb.dbo .backupset. database_name <> 'MODEL'
+AND
+msdb.dbo .backupset. database_name <> 'MSDB'
+AND
+msdb .. backupset. type ='L'
+
+ORDER
+
+BY msdb . dbo. backupset .database_name , msdb .dbo . backupset.backup_finish_date desc
+
+use NOME DO BANCO
+go
+DECLARE @DB_NAME VARCHAR(50)
+SET @DB_NAME = NOME DO BANCO
+
+SELECT restore_date [data_do_restore] ,
+		destination_database_name [Database],
+		user_name [User_name],
+		CASE msdb..restorehistory.restore_type
+      WHEN 'D' THEN 'Full'
+      WHEN 'L' THEN 'Log'
+      WHEN 'I' THEN 'Diferencial'
+      WHEN 'F' THEN 'File ou Filegroup'
+      WHEN 'G' THEN 'Diferencial Arquivo'
+      WHEN 'P' THEN 'Parcial'
+      WHEN 'Q' THEN 'Diferencial Parcial'
+      END AS 'Tipo_do_restore',
+      replace,
+      DATEDIFF(MINUTE,restore_date,GETDATE())[TEMPO_EM_MINUTOS_DO_RESTORE]
+       FROM msdb..restorehistory 
+       WHERE destination_database_name = @DB_NAME
+go 
+
+SELECT
+CAST(sysfiles.size/128.0 AS int) AS FileSizeMB,
+sysfiles.name AS LogicalFileName, sysfiles.filename AS PhysicalFileName,
+CONVERT(sysname,DatabasePropertyEx('pr269','Status')) AS Status,
+CONVERT(sysname,DatabasePropertyEx('pr269','Updateability')) AS Updateability,
+CONVERT(sysname,DatabasePropertyEx('pr269','Recovery')) AS RecoveryMode,
+CAST(sysfiles.size/128.0 - CAST(FILEPROPERTY(sysfiles.name,  + '' +
+       'SpaceUsed' + '' + '' ) AS int)/128.0 AS int) AS FreeSpaceMB,
+CAST(100 * (CAST (((sysfiles.size/128.0 -CAST(FILEPROPERTY(sysfiles.name,
++ '' + 'SpaceUsed' + '' + '' ) AS int)/128.0)/(sysfiles.size/128.0))
+AS decimal(4,2))) AS varchar(8)) + '' + '' + '%' + '' + '' AS 'FreeSpace%'
+FROM dbo.sysfiles
