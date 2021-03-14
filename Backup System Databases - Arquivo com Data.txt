@@ -1,0 +1,102 @@
+USE [Traces]
+GO
+/****** Object:  StoredProcedure [dbo].[stpBackup_Databases_System_Disco]    Script Date: 27/03/2017 15:50:26 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE procedure [dbo].[stpBackup_Databases_System_Disco]
+AS
+BEGIN
+	declare @Backup_Databases table (Nm_database varchar(500))
+	declare @Nm_Database varchar(500), @Nm_Caminho varchar(5000)
+	
+	insert into @Backup_Databases
+	select Name
+	from sys.databases
+	where	Name in ('master','model','msdb','Traces')
+			AND state_desc = 'ONLINE'
+				
+	while exists (select null from @Backup_Databases)
+	begin			
+		select top 1 @Nm_Database = Nm_database from @Backup_Databases order by Nm_database
+			
+		set @Nm_Caminho =	'\\192.168.1.254\backup_sql\SystemDatabase\' + @Nm_Database + '_'
+							+ REPLACE(CONVERT(VARCHAR(10),GETDATE(),120),'-','') + '_Dados.bak'
+			
+		exec traces.dbo.stpBackup_FULL_Database @Nm_Caminho, @Nm_Database, @Nm_Caminho --o último parametro corresponde a descrição do bkp
+			
+		delete from @Backup_Databases where Nm_database = @Nm_Database
+	End
+END
+
+GO
+
+USE [msdb]
+GO
+
+/****** Object:  Job [DBA - Backup Databases System FULL]    Script Date: 09/12/2018 11:40:23 ******/
+BEGIN TRANSACTION
+DECLARE @ReturnCode INT
+SELECT @ReturnCode = 0
+/****** Object:  JobCategory [Database Maintenance]    Script Date: 09/12/2018 11:40:23 ******/
+IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'Database Maintenance' AND category_class=1)
+BEGIN
+EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'Database Maintenance'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+
+END
+
+DECLARE @jobId BINARY(16)
+EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'DBA - Backup Databases System FULL', 
+		@enabled=1, 
+		@notify_level_eventlog=0, 
+		@notify_level_email=2, 
+		@notify_level_netsend=0, 
+		@notify_level_page=0, 
+		@delete_level=0, 
+		@description=N'No description available.', 
+		@category_name=N'Database Maintenance', 
+		@owner_login_name=N'sa', 
+		@notify_email_operator_name=N'DBA_Operator', @job_id = @jobId OUTPUT
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+/****** Object:  Step [Executa Backups]    Script Date: 09/12/2018 11:40:23 ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Executa Backups', 
+		@step_id=1, 
+		@cmdexec_success_code=0, 
+		@on_success_action=1, 
+		@on_success_step_id=0, 
+		@on_fail_action=2, 
+		@on_fail_step_id=0, 
+		@retry_attempts=0, 
+		@retry_interval=0, 
+		@os_run_priority=0, @subsystem=N'TSQL', 
+		@command=N'exec [dbo].[stpBackup_Databases_System_Disco]', 
+		@database_name=N'Traces', 
+		@flags=0
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'DIÁRIO - 20:00', 
+		@enabled=1, 
+		@freq_type=4, 
+		@freq_interval=1, 
+		@freq_subday_type=1, 
+		@freq_subday_interval=0, 
+		@freq_relative_interval=0, 
+		@freq_recurrence_factor=0, 
+		@active_start_date=20160124, 
+		@active_end_date=99991231, 
+		@active_start_time=200000, 
+		@active_end_time=235959, 
+		@schedule_uid=N'24ef67c1-3b54-4fa4-b74f-5dada964a733'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+COMMIT TRANSACTION
+GOTO EndSave
+QuitWithRollback:
+    IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
+EndSave:
+GO
