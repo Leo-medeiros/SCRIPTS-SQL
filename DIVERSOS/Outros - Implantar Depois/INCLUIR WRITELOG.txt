@@ -1,0 +1,7 @@
+select cast(Dt_Log as date),count(*)
+from Traces..Resultado_WhoisActive
+where Dt_Log >= '20170501 08:00'
+and wait_info like '%WRITELOG'
+and len(wait_info) > 15
+group by cast(Dt_Log as date)
+order by 1 DESC

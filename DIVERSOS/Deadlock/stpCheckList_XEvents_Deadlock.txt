@@ -1,0 +1,48 @@
+USE [Traces]
+GO
+/****** Object:  StoredProcedure [dbo].[stpCheckList_XEvents_Deadlock]    Script Date: 27/10/2017 15:22:31 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+/*******************************************************************************************************************************
+--	Trace Queries Demoradas
+*******************************************************************************************************************************/
+CREATE PROCEDURE [dbo].[stpCheckList_XEvents_Deadlock]
+AS
+BEGIN
+	SET NOCOUNT ON
+
+	DECLARE @Dt_Referencia DATETIME
+	SET @Dt_Referencia = CAST(GETDATE() AS DATE)
+	
+	IF (OBJECT_ID('tempdb..#XEvents_Deadlock') IS NOT NULL) 
+		DROP TABLE #XEvents_Deadlock
+
+	----------------------------------------------------------------------------------------------------------------------------
+	-- GERAL - 10 DIAS ATRAS
+	----------------------------------------------------------------------------------------------------------------------------	
+	SELECT	TOP 10 CONVERT(VARCHAR(10), [eventDate], 120) AS Data, COUNT(*) AS [QTD]
+	INTO #XEvents_Deadlock
+	FROM [dbo].[Log_DeadLock]
+	WHERE 
+		[eventDate] > DATEADD(DAY,-10,@Dt_Referencia)
+	GROUP BY CONVERT(VARCHAR(10), [eventDate], 120)
+	order by CONVERT(VARCHAR(10), [eventDate], 120) DESC
+
+	--select * from #XEvents_Deadlock
+	
+	TRUNCATE TABLE [dbo].[CheckList_XEvents_Deadlock_Geral]
+		
+	INSERT INTO [dbo].[CheckList_XEvents_Deadlock_Geral] ( [Data], [QTD] )
+	SELECT [Data], [QTD]
+	FROM #XEvents_Deadlock
+		
+	IF (@@ROWCOUNT = 0)
+	BEGIN
+		INSERT INTO [dbo].[CheckList_XEvents_Deadlock_Geral] ( [Data], [QTD] )	
+		SELECT 'Sem registro de Deadlocks', NULL		
+	END
+END
+

@@ -1,0 +1,39 @@
+/*
+select
+'if exists (select name
+			from sys.databases 
+			where State_Desc = ''ONLINE''
+			and name = '''+A.Name+''' )
+BEGIN
+	ALTER DATABASE '+A.Name+' 
+	SET SINGLE_USER WITH ROLLBACK IMMEDIATE 
+
+	exec sp_detach_db '+A.Name+'		
+END'
+from sys.sysdatabases A 
+where A.Name not in ('tempdb','master','model','msdb')
+*/
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'BD_GESPLAN' )  BEGIN   ALTER DATABASE BD_GESPLAN    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db BD_GESPLAN    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'DADOSADV' )  BEGIN   ALTER DATABASE DADOSADV    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db DADOSADV    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'DA_PRD' )  BEGIN   ALTER DATABASE DA_PRD    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db DA_PRD    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'DBP10ARTAUDIT' )  BEGIN   ALTER DATABASE DBP10ARTAUDIT    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db DBP10ARTAUDIT    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'DBP11PANAUDIT' )  BEGIN   ALTER DATABASE DBP11PANAUDIT    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db DBP11PANAUDIT    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'DW_Artmed' )  BEGIN   ALTER DATABASE DW_Artmed    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db DW_Artmed    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'DW_CrystalReports' )  BEGIN   ALTER DATABASE DW_CrystalReports    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db DW_CrystalReports    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'Editorial' )  BEGIN   ALTER DATABASE Editorial    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db Editorial    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'MipHelpDeskGrpPRD' )  BEGIN   ALTER DATABASE MipHelpDeskGrpPRD    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db MipHelpDeskGrpPRD    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'Obras3GrpPRD' )  BEGIN   ALTER DATABASE Obras3GrpPRD    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db Obras3GrpPRD    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'PROMODAGDB' )  BEGIN   ALTER DATABASE PROMODAGDB    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db PROMODAGDB    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'Protheus10Art2008' )  BEGIN   ALTER DATABASE Protheus10Art2008    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db Protheus10Art2008    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'Protheus10ArtDW' )  BEGIN   ALTER DATABASE Protheus10ArtDW    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db Protheus10ArtDW    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'Protheus10EurPRD' )  BEGIN   ALTER DATABASE Protheus10EurPRD    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db Protheus10EurPRD    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'Protheus10EurobooksPRD' )  BEGIN   ALTER DATABASE Protheus10EurobooksPRD    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db Protheus10EurobooksPRD    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'Protheus11GrpPRD' )  BEGIN   ALTER DATABASE Protheus11GrpPRD    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db Protheus11GrpPRD    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'Protheus11PanPRD' )  BEGIN   ALTER DATABASE Protheus11PanPRD    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db Protheus11PanPRD    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'Protheus11Prd' )  BEGIN   ALTER DATABASE Protheus11Prd    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db Protheus11Prd    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'Protheus12MexPRD' )  BEGIN   ALTER DATABASE Protheus12MexPRD    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db Protheus12MexPRD    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'Senior' )  BEGIN   ALTER DATABASE Senior    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db Senior    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'Traces' )  BEGIN   ALTER DATABASE Traces    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db Traces    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'orquestra_obracoletiva' )  BEGIN   ALTER DATABASE orquestra_obracoletiva    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db orquestra_obracoletiva    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'orquestra_prd' )  BEGIN   ALTER DATABASE orquestra_prd    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db orquestra_prd    END
+if exists (select name     from sys.databases      where State_Desc = 'ONLINE'     and name = 'orquestra_projetos' )  BEGIN   ALTER DATABASE orquestra_projetos    SET SINGLE_USER WITH ROLLBACK IMMEDIATE      exec sp_detach_db orquestra_projetos    END

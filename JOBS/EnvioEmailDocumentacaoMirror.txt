@@ -1,0 +1,91 @@
+Bom Dia Pessoal,
+
+Segue abaixo uma breve documentação dos comandos que conversamos em nossa reunião de ontem.
+
+Caso 1: É necessário mover as bases de um servidor para o outro devido a alguma manutenção demorada no servidor 1:
+
+-- Basta executar esse comando abaixo no servidor principal
+alter database NOME_BASE SET PARTNER FAILOVER
+
+
+Caso 2: Aconteceu um desastre no servidor 1 e não será possível recuperar esse servidor rapidamente:
+
+-- Basta executar os comandos abaixo no servidor secundário:
+
+alter database NOME_BASE SET PARTNER OFF -- acaba com o mirror 
+restore database NOME_BASE with RECOVERY --deixa a base online
+
+Caso 3: Aconteceu um desastre no servidor 2 e não será possível recuperar esse servidor rapidamente:
+
+Isso não para a produção, contudo, caso esse servidor fique fora por muito tempo, o log das bases podem crescer muito no servidor de produção e isso pode causar problemas:
+
+Nesse caso basta rodar o comando abaixo no servidor 2 para acabar com o Mirror
+
+alter database NOME_BASE SET PARTNER OFF -- acaba com o mirror 
+
+Caso 4: O mirror está impactando muito na performance 
+
+Para saber se o mirror está impactando na performance, basta monitorar se existem Waits de DBMIRROR na procedure abaixo:
+
+Exec sp_whoisactive
+
+Além disso, também pode ser verificado com a query abaixo como está o tráfego de dados no mirror:
+select top 10 *
+from dbo.Historico_Log_DBMirror
+where database_name = 'Protheus11GrpPRD'
+order by local_time desc
+
+
+Se for validado que é o mirror que está impactando, deve-se acabar com o mirror com o comando abaixo:
+
+alter database NOME_BASE SET PARTNER OFF -- acaba com o mirror 
+
+Caso 5: Querem rodar uma operação de forma mais rápida sem replicar entre os dois servidores
+
+Nesse caso é possível suspender o mirror, contudo, deve ser monitorado o tamanho do arquivo de LOG que vai guardar todas as alterações até que o mirror seja estabelecido;
+
+-- Comando para pausar o mirror
+ALTER DATABASE database_name SET PARTNER SUSPEND
+
+--Comando para voltar o mirror
+ALTER DATABASE database_name SET PARTNER RESUME
+
+
+Segue abaixo um script de exemplo para criar o Database mirror da base “Orquestra_prd”: 
+Rodar no servidor 1:
+
+ALTER DATABASE [orquestra_prd] SET RECOVERY FULL WITH NO_WAIT
+
+BACKUP DATABASE [orquestra_prd] TO  DISK = N'\\10.1.1.141\DRBackup\BackupSQL\Mirror\orquestra_prd.bak' WITH NOFORMAT, INIT,  NAME = N'orquestra_prd-Full Database Backup', SKIP, NOREWIND, NOUNLOAD,  STATS = 10, COMPRESSION
+
+
+BACKUP LOG [orquestra_prd] TO  DISK = N'\\10.1.1.141\DRBackup\BackupSQL\Mirror\orquestra_prd_Log.bak' WITH NOFORMAT, INIT,  NAME = N'orquestra_prd-Transaction Log  Backup', SKIP, NOREWIND, NOUNLOAD,  STATS = 10, COMPRESSION
+
+
+Rodar no servidor 2: 
+RESTORE DATABASE [orquestra_prd] FROM  DISK = N'\\10.1.1.141\DRBackup\BackupSQL\Mirror\orquestra_prd.bak' WITH  FILE = 1,  NORECOVERY,  NOUNLOAD,  REPLACE, STATS = 10
+
+RESTORE LOG [orquestra_prd] FROM  DISK = N'\\10.1.1.141\DRBackup\BackupSQL\Mirror\orquestra_prd_log.bak' WITH  FILE = 1,  NORECOVERY,  NOUNLOAD,  STATS = 10
+
+ALTER DATABASE [orquestra_prd] SET PARTNER = N'TCP://FRSDB01.artmed.com.br:5022'
+
+
+
+Rodar no servidor 1:
+
+ALTER DATABASE [orquestra_prd] SET PARTNER = N'TCP://FRSDB02.artmed.com.br:5022'
+
+
+ALTER DATABASE [orquestra_prd] SET SAFETY FULL
+
+ALTER DATABASE [orquestra_prd] SET PARTNER TIMEOUT 60
+
+
+
+O mirror proporciona uma grande segurança para o ambiente com o fato de duplicar de forma síncrona as bases, contudo, como podem perceber, ele aumenta a complexidade da administração do banco de dados. 
+
+Caso queiram conhecer mais a fundo o mirror, no meu Blog eu fiz uma série de posts sobre o Database Mirroring. No final desse link abaixo, tem o link para todos os artigos que fiz:
+
+http://fabriciolima.net/blog/2013/01/20/database-mirroring-como-fica-o-backup-do-log-quando-ocorre-um-failover-no-mirror/
+
+Dessa forma, concluo 100% o projeto de implementação do mirror. 

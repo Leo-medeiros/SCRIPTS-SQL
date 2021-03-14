@@ -1,0 +1,98 @@
+/*
+-- 1) Executar o script abaixo para Atualizar as Estatísiticas
+
+-- 2) Acompanhar a Atualização das Estatísticas
+
+select count(*) 
+from Traces.._Atualiza_Estatisticas (nolock)
+
+exec sp_whoisactive
+*/
+
+use Traces
+
+IF (OBJECT_ID('_Atualiza_Estatisticas') IS NOT NULL) 
+	DROP TABLE _Atualiza_Estatisticas
+
+CREATE TABLE _Atualiza_Estatisticas (
+	Id_Estatistica INT IDENTITY,
+	Ds_Comando VARCHAR(MAX),
+	Nr_Linha INT
+)
+
+DECLARE @SQL VARCHAR(max) , @DB sysname
+
+------------------------------------------------------------------------------------------------------------------------
+-- <<<<<< Escolher as databases para Atualizar as Estatisticas!!! >>>>>>
+------------------------------------------------------------------------------------------------------------------------
+DECLARE curDB CURSOR FORWARD_ONLY STATIC FOR  
+SELECT [name]  
+FROM master..sysdatabases 
+WHERE  [name] in (
+	'Protheus11PanPRD',
+	'orquestra_prd',
+	'DBP11PANAUDIT')
+
+------------------------------------------------------------------------------------------------------------------------
+-- Verifica as Estatísticas que devem ser atualizadas
+------------------------------------------------------------------------------------------------------------------------
+OPEN curDB  
+FETCH NEXT FROM curDB INTO @DB  
+WHILE @@FETCH_STATUS = 0  
+BEGIN  
+	SELECT @SQL = 'USE [' + @DB +']' + CHAR(13) +  '
+			
+	;WITH Tamanho_Tabelas AS (
+			SELECT obj.Name, prt.rows
+			FROM sys.objects obj
+				JOIN sys.indexes idx on obj.object_id = idx.object_id
+				JOIN sys.partitions prt on obj.object_id = prt.object_id
+				JOIN sys.allocation_units alloc on alloc.container_id = prt.partition_id
+			WHERE obj.type = ''U'' AND idx.index_id IN (0, 1) and prt.rows > 1000
+			GROUP BY obj.Name, prt.rows )		
+			    
+	insert into Traces.._Atualiza_Estatisticas(Ds_Comando,Nr_Linha)	
+	SELECT  ''UPDATE STATISTICS [' + @DB + '].'' + schema_Name(E.schema_id) + ''.['' +B.Name + ''] '' + A.Name+ '' WITH FULLSCAN'',D.rows
+	FROM sys.stats A
+		join sys.sysobjects B with(nolock) on A.object_id = B.id
+		join sys.sysindexes C with(nolock) on C.id = B.id and A.Name = C.Name
+		JOIN Tamanho_Tabelas D on  B.Name = D.Name 
+		join sys.tables E on E.object_id = A.object_id
+	WHERE  -- C.rowmodctr > D.rows*.02 
+		C.rowmodctr > 10000
+		--and 
+	and	substring( B.Name,1,3) not in (''sys'',''dtp'')
+		and substring(  B.Name , 1,1) <> ''_'' -- elimina tabelas teporárias		
+	ORDER BY D.rows'
+	            
+	EXEC (@SQL )
+
+	--  SELECT @SQL
+
+	SET @SQL = ''
+	   
+	FETCH NEXT FROM curDB INTO @DB  
+END  
+	   
+CLOSE curDB  
+DEALLOCATE curDB
+
+------------------------------------------------------------------------------------------------------------------------
+-- Loop para Atualizar cada Estatística
+------------------------------------------------------------------------------------------------------------------------
+DECLARE @Loop INT, @Comando NVARCHAR(4000)
+SET @Loop = 1
+
+WHILE EXISTS(SELECT TOP 1 NULL FROM Traces.._Atualiza_Estatisticas)
+BEGIN	
+	SELECT @Comando = Ds_Comando
+	FROM Traces.._Atualiza_Estatisticas
+	WHERE Id_Estatistica = @Loop
+		
+	EXECUTE sp_executesql @Comando
+
+	DELETE FROM Traces.._Atualiza_Estatisticas
+	WHERE Id_Estatistica = @Loop
+
+	SET @Loop = @Loop + 1		
+END

@@ -1,0 +1,75 @@
+;WITH Sessoes (Sessao, Bloqueadora) As (
+    SELECT Session_Id, Blocking_Session_Id
+    FROM sys.dm_exec_requests As R
+    WHERE blocking_session_id > 0
+    UNION ALL
+    SELECT Session_Id, CAST(0 As SMALLINT)
+    FROM sys.dm_exec_sessions As S
+    WHERE EXISTS (
+        SELECT * FROM sys.dm_exec_requests As R
+        WHERE S.Session_Id = R.Blocking_Session_Id)
+    AND NOT EXISTS (
+        SELECT * FROM sys.dm_exec_requests As R
+        WHERE S.Session_Id = R.Session_Id)
+),
+
+Bloqueios As (
+
+    SELECT 
+        Sessao, Bloqueadora, Sessao As Ref, 1 As Nivel
+    FROM Sessoes
+    UNION ALL
+    SELECT S.Sessao, B.Sessao, B.Ref, Nivel + 1
+    FROM Bloqueios As B
+    INNER JOIN Sessoes As S ON B.Sessao = S.Bloqueadora)
+
+SELECT Ref As Sessao,
+    COUNT(DISTINCT R.Session_Id) As BloqueiosDiretos,
+    COUNT(DISTINCT B.Sessao) – 1 As BloqueiosTotal,
+    COUNT(DISTINCT B.Sessao) – COUNT(DISTINCT R.Session_Id) – 1 As BloqueiosIndiretos
+FROM Bloqueios As B
+    INNER JOIN sys.dm_exec_requests As R
+        ON B.Ref = R.blocking_session_id
+GROUP BY Ref
+
+
+
+---------------------------------------------
+
+;WITH Sessoes (Sessao, Bloqueadora) As (
+    SELECT Session_Id, Blocking_Session_Id
+    FROM sys.dm_exec_requests As R
+    WHERE blocking_session_id > 0
+    UNION ALL
+    SELECT Session_Id, CAST(0 As SMALLINT)
+    FROM sys.dm_exec_sessions As S
+    WHERE EXISTS (
+        SELECT * FROM sys.dm_exec_requests As R
+        WHERE S.Session_Id = R.Blocking_Session_Id)
+    AND NOT EXISTS (
+        SELECT * FROM sys.dm_exec_requests As R
+        WHERE S.Session_Id = R.Session_Id)
+),
+
+Bloqueios As (
+
+    SELECT 
+        Sessao, Bloqueadora, Sessao As Ref, 1 As Nivel
+    FROM Sessoes
+    UNION ALL
+    SELECT S.Sessao, B.Sessao, B.Ref, Nivel + 1
+    FROM Bloqueios As B
+    INNER JOIN Sessoes As S ON B.Sessao = S.Bloqueadora)
+
+SELECT Ref As Sessao,
+    COUNT(DISTINCT R.Session_Id) As BloqueiosDiretos,
+    COUNT(DISTINCT B.Sessao) – 1 As BloqueiosTotal,
+    COUNT(DISTINCT B.Sessao) – COUNT(DISTINCT R.Session_Id) – 1 As BloqueiosIndiretos,
+
+    (SELECT TEXT FROM sys.dm_exec_sql_text(
+        (SELECT most_recent_sql_handle FROM sys.dm_exec_connections
+        WHERE session_id = B.Ref))) As Comando
+FROM Bloqueios As B
+    INNER JOIN sys.dm_exec_requests As R
+        ON B.Ref = R.blocking_session_id
+GROUP BY Ref

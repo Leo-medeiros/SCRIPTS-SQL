@@ -1,0 +1,26 @@
+-- EXEMPLO COM O BANCO C/ NOME CERTO
+USE master 
+GO
+IF(EXISTS(SELECT NAME FROM sys.databases WHERE name ='SEGCORP'))
+ 
+
+	   SELECT TOP 5 * FROM SEGCORP.dbo.abd_dbsizes
+	
+ 
+ELSE
+
+	PRINT 'O BANCO DE DADOS NÃO EXISTE NESTA INSTANCIA'
+	
+	-----------------------------------------------------
+	
+	-- EXEMPLO COM O BANCO C/ NOME ERRADO
+USE master 
+GO
+IF(EXISTS(SELECT NAME FROM sys.databases WHERE name ='SEGCORP2'))
+ 
+	SELECT 'TEM O BANCO AQUI' [RESULTADO]
+	
+ ELSE
+
+	PRINT 'O BANCO DE DADOS NÃO EXISTE NESTA INSTANCIA'
+ 

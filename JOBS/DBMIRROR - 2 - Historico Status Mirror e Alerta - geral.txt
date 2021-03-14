@@ -1,0 +1,288 @@
+use Traces
+GO
+if OBJECT_ID('Historico_Log_DBMirror') is not null
+	drop table Historico_Log_DBMirror
+GO
+CREATE TABLE  Historico_Log_DBMirror(
+ Id_Historico_Log int identity,
+ database_name   sysname,          -- Name of database
+ role     tinyint,                 -- 1 = Principal, 2 = Mirror
+ mirroring_state   tinyint,        -- 0 = Suspended, 1 = Disconnected, 2 = Synchronizing, 3 = Pending Failover, 4 = Synchronized
+ witness_status   tinyint,         -- 1 = Connected, 2 = Disconnected
+ log_generation_rate  int null,    -- Amount of log generated since preceding update of the mirroring status of this database in kb/sec
+ -- Same as Perfmon Counter Log Bytes Flushed/Sec and Current rate of new transactions in Mirroring Monitor *****
+ unsent_log    int,                -- Size of the unsent log in the send queue on the principal in KB (Send Queue) 
+ -- Same as Log Send Queue in Perfmon and Unsent Log in Mirroring Monitor *****
+ send_rate    int null,            -- Send rate of log from the principal to the mirror in kb/sec 
+ -- Same as Log Bytes Sent/Sec in perfmon and Current send rate in Mirroring Monitor *****
+ unrestored_log   int,             -- Size of the redo queue on the mirror in kb(Redo Queue)
+ -- Same as Redo Queue KB in perfmon and Unrestored log in Mirroring Monitor. ******
+ recovery_rate   int null,         -- Redo rate on the mirror in kb/sec
+ -- Same as Redo Bytes/Sec in Perfmon and Current Restore rate in Mirroring Monitor *********
+ transaction_delay  int null,      -- Total delay for all transactions in ms
+ -- Same as perfmon counter Transaction Delay.
+ transactions_per_sec int null,    -- Number of transactions that are occurring per second on the principal server instance in trans / sec
+ -- Same as perfmon counter Transaction/Sec
+ average_delay   int,              -- Average delay on the principal server instance for each transaction because of database mirroring.
+ -- In high-performance mode, this value is generally 0 in ms and same asMirror Commit Overhead in Mirroring Monitor *****
+ --time_recorded   datetime,         -- Time at which the row was recorded by the database mirroring monitor. This is the system clock time of the principal in GMT 
+ --time_behind    datetime,          -- Approximate system-clock time of the principal to which the mirror database is currently caught up.
+ -- This value is meaningful only on the principal server instance in GMT
+ local_time    datetime   not null ,        -- System clock time on the local server instance when this row was updated
+ Fl_Operation_Mode tinyint,
+  constraint PK_Historico_Log_DBMirror primary key (Id_Historico_Log)
+  )
+  
+  create unique nonclustered  index SK01_Historico_Log_DBMirror on Historico_Log_DBMirror(local_time, database_name)
+
+
+GO
+
+if OBJECT_ID('stpCarga_Log_DBMirror_Geral') is not null
+	drop procedure stpCarga_Log_DBMirror_Geral
+
+
+USE [Traces]
+GO
+/****** Object:  StoredProcedure [dbo].[stpCarga_Log_DBMirror]    Script Date: 5/16/2015 1:19:50 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- [stpCarga_Log_DBMirror_Geral] 4
+
+CREATE procedure [dbo].[stpCarga_Log_DBMirror_Geral]  @mode tinyint
+AS
+	SET NOCOUNT ON 
+	
+	declare @database_name varchar(50)
+	
+	declare @DATABASES table(database_name varchar(50))
+
+	insert into @DATABASES(database_name)
+	SELECT  name
+    FROM    sys.databases d
+            LEFT OUTER JOIN sys.database_mirroring m ON m.database_id = d.database_id
+    WHERE   mirroring_role_desc IS NOT NULL
+
+	while exists(select null from @DATABASES)
+	begin
+
+	select top 1 @database_name = database_name
+	from @DATABASES
+
+		if OBJECT_ID('tempdb..#Log_DBMirror') is not null
+			drop table #Log_DBMirror
+		
+		CREATE TABLE  #Log_DBMirror(
+		 database_name   sysname,          -- Name of database
+		 role     tinyint,                 -- 1 = Principal, 2 = Mirror
+		 mirroring_state   tinyint,        -- 0 = Suspended, 1 = Disconnected, 2 = Synchronizing, 3 = Pending Failover, 4 = Synchronized
+		 witness_status   tinyint,         -- 1 = Connected, 2 = Disconnected
+		 log_generation_rate  int null,    -- Amount of log generated since preceding update of the mirroring status of this database in kb/sec
+		 -- Same as Perfmon Counter Log Bytes Flushed/Sec and Current rate of new transactions in Mirroring Monitor *****
+		 unsent_log    int,                -- Size of the unsent log in the send queue on the principal in KB (Send Queue) 
+		 -- Same as Log Send Queue in Perfmon and Unsent Log in Mirroring Monitor *****
+		 send_rate    int null,            -- Send rate of log from the principal to the mirror in kb/sec 
+		 -- Same as Log Bytes Sent/Sec in perfmon and Current send rate in Mirroring Monitor *****
+		 unrestored_log   int,             -- Size of the redo queue on the mirror in kb(Redo Queue)
+		 -- Same as Redo Queue KB in perfmon and Unrestored log in Mirroring Monitor. ******
+		 recovery_rate   int null,         -- Redo rate on the mirror in kb/sec
+		 -- Same as Redo Bytes/Sec in Perfmon and Current Restore rate in Mirroring Monitor *********
+		 transaction_delay  int null,      -- Total delay for all transactions in ms
+		 -- Same as perfmon counter Transaction Delay.
+		 transactions_per_sec int null,    -- Number of transactions that are occurring per second on the principal server instance in trans / sec
+		 -- Same as perfmon counter Transaction/Sec
+		 average_delay   int,              -- Average delay on the principal server instance for each transaction because of database mirroring.
+		 -- In high-performance mode, this value is generally 0 in ms and same asMirror Commit Overhead in Mirroring Monitor *****
+		 time_recorded   datetime,         -- Time at which the row was recorded by the database mirroring monitor. This is the system clock time of the principal in GMT 
+		 time_behind    datetime,          -- Approximate system-clock time of the principal to which the mirror database is currently caught up.
+		 -- This value is meaningful only on the principal server instance in GMT
+		 local_time    datetime            -- System clock time on the local server instance when this row was updated
+		  )
+		--Somente para fazer a atualizacao da procedure, pois nao e possivel fazer isso no insert 
+		exec msdb.dbo.sp_dbmmonitorresults @database_name , @mode, @update_table = 1
+	
+		insert into #Log_DBMirror
+		exec msdb.dbo.sp_dbmmonitorresults @database_name , @mode, @update_table = 0
+
+	/*
+		-- Elimina informacoes duplicadas (Database e local_time)	
+		insert into Historico_Log_DBMirror(database_name, role, mirroring_state, witness_status, log_generation_rate, unsent_log, send_rate, unrestored_log, recovery_rate, transaction_delay, transactions_per_sec, average_delay, local_time)
+		select distinct A.database_name, A.role, A.mirroring_state, A.witness_status, A.log_generation_rate, A.unsent_log, A.send_rate, A.unrestored_log, A.recovery_rate, A.transaction_delay, A.transactions_per_sec, A.average_delay, A.local_time
+		from #Log_DBMirror A
+			left join Historico_Log_DBMirror B on A.local_time = B.local_time and A.database_name = B.database_name
+		where B.local_time is null and A.recovery_rate is not null
+	*/
+		DECLARE @Fl_Operation_mode TINYINT
+	
+		-- Para logar o Operation mode Atual do Database Mirroring
+		SELECT @Fl_Operation_mode = 
+			 CASE WHEN mirroring_safety_level_desc = 'FULL' AND mirroring_witness_state_desc <> 'UNKNOWN' THEN 3
+				 WHEN mirroring_safety_level_desc = 'FULL' AND mirroring_witness_state_desc = 'UNKNOWN' THEN 2
+				 WHEN mirroring_safety_level_desc = 'OFF' THEN 1 end
+		FROM sys.database_mirroring m 
+			JOIN sys.databases db ON db.database_id = m.database_id
+		where name = @database_name 
+	
+		-- Elimina informacoes duplicadas (Database e local_time). As vezes vem local_time igual e recovery_rate diferentes
+		insert into Historico_Log_DBMirror(database_name, role, mirroring_state, witness_status, log_generation_rate, unsent_log, send_rate, unrestored_log, 
+			recovery_rate, transaction_delay, transactions_per_sec, average_delay, local_time,Fl_Operation_mode)
+		select distinct A.database_name, A.role, A.mirroring_state, A.witness_status, max(isnull(A.log_generation_rate,0)), 
+				max(isnull(A.unsent_log,0)), max(isnull(A.send_rate,0)), max(isnull(A.unrestored_log,0)), max(isnull(A.recovery_rate,0)), 
+				max(isnull(A.transaction_delay,0)), max(isnull(A.transactions_per_sec,0)), max(isnull(A.average_delay,0)), A.local_time,ISNULL(@Fl_Operation_mode,0)
+		from #Log_DBMirror A
+			left join Historico_Log_DBMirror B on A.local_time = B.local_time and A.database_name = B.database_name 
+		where B.local_time is null 
+		group by A.database_name, A.role, A.mirroring_state, A.witness_status,A.local_Time
+
+		delete from @DATABASES 
+		where database_name = @database_name 
+	
+	end
+
+
+
+GO
+if OBJECT_ID('stpAlerta_Status_DBMirror_Geral') is not null
+	drop procedure stpAlerta_Status_DBMirror_Geral
+GO
+
+CREATE procedure [dbo].[stpAlerta_Status_DBMirror_Geral] --@database_name varchar (50)
+AS
+		
+	declare @Ultimo_Registro as table(database_name varchar(100),Id_Historico_Log int)
+	
+	insert into @Ultimo_Registro
+	select A.database_name, max(A.Id_Historico_Log) Id_Historico_Log
+	from Historico_Log_DBMirror A (nolock) 					
+	group by A.database_name	
+	
+	declare @Penultimo_Registro as table(database_name varchar(100),Id_Historico_Log int)
+	
+	insert into @Penultimo_Registro
+	select A.database_name, max(A.Id_Historico_Log) Id_Historico_Log
+	from Historico_Log_DBMirror A (nolock) 	
+		left join @Ultimo_Registro B on A.Id_Historico_Log = B.Id_Historico_Log
+	where B.Id_Historico_Log is null		
+	group by A.database_name	
+	
+	
+	
+	if exists (
+	select null
+	from (	select E.* 
+			from Historico_Log_DBMirror E
+			join @Penultimo_Registro F on E.Id_Historico_Log = F.Id_Historico_Log
+			) A
+		join (	select C.* 
+				from Historico_Log_DBMirror C
+					join @Ultimo_Registro D on C.Id_Historico_Log = D.Id_Historico_Log		) 
+			B on A.database_name = B.database_name 			
+	where A.role <> B.role 
+		or A.mirroring_state <> B.mirroring_state 
+		or A.witness_status <> B.witness_status 
+	--OR ISNULL(A.Fl_Operation_Mode,0) <>  ISNULL(B.Fl_Operation_Mode,0) 		
+	--order by B.database_name
+	)
+	begin	
+		
+		/**************************************************************
+					Header
+		***************************************************************/
+
+		DECLARE @MirrorHeader VARCHAR(MAX)
+		SET @MirrorHeader='<font 
+					color=black bold=true size= 5>'
+		            
+		SET @MirrorHeader=@MirrorHeader+'<BR /> Situação das Databases do Mirror<BR />' 
+		SET @MirrorHeader=@MirrorHeader+'</font>'
+
+		/**************************************************************
+					Espaço em disco - Informações
+		***************************************************************/
+
+		DECLARE @MirrorTable VARCHAR(MAX)    
+		SET @MirrorTable= cast( (    
+		SELECT td =  database_name + 
+				'</td><td> ' + Fl_Operation_Mode + 
+				'</td><td>'+  ROLE_Mirror + 
+				'</td><td>'  + mirroring_state + 
+				'</td><td>'  + witness_status + 
+				'</td><td>'  + Horario+ '</td><td align = center>' 
+
+		FROM (           
+				select B.database_name database_name,
+				CASE ISNULL(B.Fl_Operation_Mode ,0)
+					WHEN 0 THEN 'Não configurado'
+					WHEN 1 THEN 'HP Sem Failover'
+					WHEN 2 THEN 'HS Sem Failover'
+					WHEN 3 THEN 'HS Com Failover'
+				END Fl_Operation_Mode,	
+					case B.role when 1 then 'Principal' when 2 then 'Mirror' end ROLE_Mirror,
+						case B.mirroring_state 
+						when 0 then 'Suspended'
+						when 1 then 'Disconnected'
+						when 2 then 'Synchronizing'
+						when 3 then 'Pending Failover'
+						when 4 then 'Synchronized' end mirroring_state,
+						
+					case B.witness_status when 0 then 'UnKnown' when 1 then 'Connected' when 2 then 'Disconnecteed' end witness_status,
+					convert(varchar,B.local_time,20) Horario
+				from (select C.* 
+					from Historico_Log_DBMirror C
+						join @Ultimo_Registro D on C.Id_Historico_Log = D.Id_Historico_Log)	B 		
+			
+		
+		
+			  ) as d order by database_name
+		  FOR XML PATH( 'tr' ), Type ) AS VARCHAR(MAX) )   
+		      
+			SET @MirrorTable = REPLACE( replace( replace( @MirrorTable, '&lt;', '<' ), '&gt;', '>' )    , '<td>', '<td align = center>')
+		    
+		  SET @MirrorTable= '<table cellpadding="0" cellspacing="0" border="3" >'    
+					  + '<tr>
+					  <th color="#23238E" width="50">Database</th>
+					  <th width="120">Operation Mode</th>
+					  <th width="120">Role</th>
+					  <th width="120">Status</th>
+					  <th width="120">Status Witness</th> 
+					  <th width="120">Horario</th>
+						</tr>'    
+					  + replace( replace( @MirrorTable, '&lt;', '<' ), '&gt;', '>' )   
+					  + '</table>' 
+	
+		/**************************************************************
+			Empty Section for giving space between table and headings
+		***************************************************************/
+
+		DECLARE @emptybody2 VARCHAR(MAX)  
+		SET @emptybody2=''  
+		SET @emptybody2 = '<table cellpadding="5" cellspacing="5" border="0">'    
+					  + 
+					  '<tr>
+					  <th width="500">               </th>
+					  </tr>'    
+					  + REPLACE( REPLACE( isnull(@emptybody2,''), '&lt;', '<' ), '&gt;', '>' )   
+					  + '</table>'    
+
+		DECLARE @subject AS VARCHAR(500)    
+		DECLARE @importance as varchar(6)    
+		DECLARE @EmailBody VARCHAR(MAX)
+		SET @importance ='High'     
+		SET @subject = 'Situação das Databases do Mirror no Servidor: ' +  @@servername
+	
+	
+		SELECT @EmailBody =
+		  @MirrorHeader + @emptybody2 + @MirrorTable+@emptybody2
+	
+			 EXEC msdb.dbo.sp_send_dbmail    
+				 @profile_name = 'MSSQLServer',
+				 @recipients = 'fabricioflima@gmail.com',
+				 @subject = @subject ,    
+				 @body = @EmailBody ,    
+				 @body_format = 'HTML' ,    
+				 @importance=@importance    
+	end
+	
+	

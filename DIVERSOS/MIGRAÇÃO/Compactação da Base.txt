@@ -1,0 +1,82 @@
+-- PASSO 1
+
+-- Mudar recovery para simple
+ALTER DATABASE NomeDatabase SET RECOVERY SIMPLE
+
+-- Gera Script - Compressão - Todos os Indices
+SELECT [t].[name] AS [Table], 
+       [i].[name] AS [Index],  
+       [p].[partition_number] AS [Partition],
+       [p].[data_compression_desc] AS [Compression],
+	   'ALTER INDEX ' + [i].[name] + ' ON ' + [t].[name] + ' REBUILD PARTITION = ALL WITH (DATA_COMPRESSION = PAGE )' AS Comando_Compressao
+--INTO #table2
+FROM [sys].[partitions] AS [p]
+INNER JOIN sys.tables AS [t] 
+     ON [t].[object_id] = [p].[object_id]
+INNER JOIN sys.indexes AS [i] 
+     ON [i].[object_id] = [p].[object_id] AND i.index_id = p.index_id
+WHERE	[i].[name] IS NOT NULL
+		AND [p].[data_compression_desc] = 'NONE'
+and rows > 10000
+ORDER BY [t].[name],  [i].[name]
+
+
+-- PASSO 2
+-- SHRINK DATABASE
+USE [Protheus11GrpMig]
+GO
+DBCC SHRINKDATABASE(N'Protheus11GrpMig' )
+GO
+
+
+-- PASSO 3
+-- REBUILD
+
+USE NomeDatabase
+
+IF object_id('tempdb..##Historico_Fragmentacao_Indice') IS NOT NULL DROP TABLE ##Historico_Fragmentacao_Indice
+	
+CREATE TABLE ##Historico_Fragmentacao_Indice(
+	[Id_Hitorico_Fragmentacao_Indice] [int] IDENTITY(1,1) NOT NULL,
+	[Dt_Referencia] [datetime] NULL,
+	[Nm_Servidor] VARCHAR(50) NULL,
+	[Nm_Database] VARCHAR(100) NULL,
+	[Nm_Tabela] VARCHAR(1000) NULL,
+	[Nm_Indice] [varchar](1000) NULL,
+	Nm_Schema varchar(50),
+	[Avg_Fragmentation_In_Percent] [numeric](5, 2) NULL,
+	[Page_Count] [int] NULL,
+	[Fill_Factor] [tinyint] NULL,
+	[Fl_Compressao] [tinyint] NULL
+) ON [PRIMARY]
+
+declare @Id_Database int 
+set @Id_Database = db_id()
+
+insert into ##Historico_Fragmentacao_Indice
+select	getdate(), @@servername Nm_Servidor,  DB_NAME(db_id()) Nm_Database, D.Name Nm_Tabela,  B.Name Nm_Indice,F.name Nm_Schema, avg_fragmentation_in_percent,
+		page_Count,fill_factor,data_compression	
+from sys.dm_db_index_physical_stats(@Id_Database,null,null,null,null) A
+join sys.indexes B on A.object_id = B.Object_id and A.index_id = B.index_id
+JOIN sys.partitions C ON C.object_id = B.object_id AND C.index_id = B.index_id
+JOIN sys.sysobjects D ON A.object_id = D.id
+join sys.objects E on D.id = E.object_id
+join  sys.schemas F on E.schema_id = F.schema_id
+          
+-- Gera Script - REBUILD
+select	'ALTER INDEX ['+ Nm_Indice+ '] ON ' + Nm_Database+ '.'+Nm_Schema+'.['+ Nm_Tabela + '] REBUILD' AS Comando, *
+FROM ##Historico_Fragmentacao_Indice A WITH(NOLOCK) -- tabela que armazena o histórico de fragmentação
+	--join master.sys.databases B on B.name = A.Nm_Database
+WHERE Dt_Referencia >= CAST(FLOOR(cast(getdate() AS FLOAT)) AS DATETIME)
+	and Avg_Fragmentation_In_Percent >= 10 
+	and Page_Count > 1000
+	and Nm_Indice is not null	
+order by Nm_Indice
+
+
+-- Passo 4
+
+-- Voltar recovery para FULL
+ALTER DATABASE NomeDatabase SET RECOVERY FULL
+
+-- Executar Backup FULL

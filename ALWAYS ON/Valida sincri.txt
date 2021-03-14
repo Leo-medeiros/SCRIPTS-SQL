@@ -1,0 +1,15 @@
+-- VALIDA SINCRONIZAÇÃO
+
+select dharcs.replica_server_name, db_name(dhdrs.database_id) as db_name, dhdrs.synchronization_state_desc
+from 
+ sys.dm_hadr_database_replica_states as dhdrs
+ inner join sys.dm_hadr_availability_replica_cluster_states as dharcs
+ on dhdrs.replica_id = dharcs.replica_id
+
+
+-- VALIDA NODE
+select dharcs.replica_server_name,dhars.role_desc, dhars.connected_state_desc
+from 
+ sys.dm_hadr_availability_replica_states as dhars
+ inner join sys.dm_hadr_availability_replica_cluster_states as dharcs
+ on dhars.replica_id = dharcs.replica_id

@@ -1,0 +1,15 @@
+
+
+IF (	
+	select COUNT(*) from  sys.database_mirroring AS sd
+    WHERE mirroring_guid IS NOT null
+    and sd.mirroring_state_desc = 'SUSPENDED')>0
+BEGIN
+
+exec sp_msforeachdb @command1 = N' ALTER DATABASE [?] SET PARTNER RESUME;'
+END 
+
+set quoted_identifier off
+exec sp_MSforeachdb " if ( '?' not in ( 'master', 'model', 'msdb', 'tempdb' ) ) 
+begin exec ('ALTER DATABASE [?] SET PARTNER RESUME') end " 
+

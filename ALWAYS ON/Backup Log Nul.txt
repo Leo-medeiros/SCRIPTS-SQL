@@ -1,0 +1,81 @@
+
+
+
+Use Traces
+GO
+CREATE procedure [dbo].[stpBackup_Log_Nul]
+as
+begin
+	if Object_id('tempdb..#Backup_Log_Databases') is not null drop table #Backup_Log_Databases
+	
+	select database_id,name
+	into #Backup_Log_Databases
+	FROM sys.databases DB
+	where  recovery_model_desc = 'FULL' and state_desc = 'ONLINE'
+		and name = 'Patrimonio'
+
+	-- select * from #Backup_Log_Databases
+
+	declare @DB_name varchar(300)
+	 
+	while exists(select null from #Backup_Log_Databases)
+	begin
+		select top 1 @DB_name = name from #Backup_Log_Databases				 
+
+		BACKUP LOG @DB_name  
+		TO Disk = 'nul'
+		WITH  COMPRESSION
+		
+		delete from #Backup_Log_Databases
+		where name = @DB_name 	 
+	end
+end
+
+
+
+GO
+USE [msdb]
+GO
+DECLARE @jobId BINARY(16)
+EXEC  msdb.dbo.sp_add_job @job_name=N'DBA - Backup Log - NUL', 
+		@enabled=1, 
+		@notify_level_eventlog=0, 
+		@notify_level_email=2, 
+		@notify_level_page=2, 
+		@delete_level=0, 
+		@category_name=N'[Uncategorized (Local)]', 
+		@owner_login_name=N'sa', 
+		@notify_email_operator_name=N'DBA_Operator', @job_id = @jobId OUTPUT
+select @jobId
+GO
+EXEC msdb.dbo.sp_add_jobserver @job_name=N'DBA - Backup Log - NUL', @server_name = N'PINA'
+GO
+USE [msdb]
+GO
+EXEC msdb.dbo.sp_add_jobstep @job_name=N'DBA - Backup Log - NUL', @step_name=N'EXECUTA BACKUP NUL', 
+		@step_id=1, 
+		@cmdexec_success_code=0, 
+		@on_success_action=1, 
+		@on_fail_action=2, 
+		@retry_attempts=0, 
+		@retry_interval=0, 
+		@os_run_priority=0, @subsystem=N'TSQL', 
+		@command=N'EXEC [dbo].[stpBackup_Log_Nul]', 
+		@database_name=N'Traces', 
+		@flags=0
+GO
+USE [msdb]
+GO
+EXEC msdb.dbo.sp_update_job @job_name=N'DBA - Backup Log - NUL', 
+		@enabled=1, 
+		@start_step_id=1, 
+		@notify_level_eventlog=0, 
+		@notify_level_email=2, 
+		@notify_level_page=2, 
+		@delete_level=0, 
+		@description=N'', 
+		@category_name=N'[Uncategorized (Local)]', 
+		@owner_login_name=N'sa', 
+		@notify_email_operator_name=N'DBA_Operator', 
+		@notify_page_operator_name=N''
+GO

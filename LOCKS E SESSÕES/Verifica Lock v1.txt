@@ -1,0 +1,21 @@
+
+select  SERVERPROPERTY('servername') as Instance_Name,
+		SERVERPROPERTY('IsClustered') as IsClustered, 
+		SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as ActiveNode, login_time as Startup_Date, 
+		GETDATE() Data_Hora, 
+		SERVERPROPERTY('edition') as SQL_Edition,
+		SERVERPROPERTY('productversion') as SQL_Version,
+		SERVERPROPERTY('productlevel') as SQL_ServicePack
+from sys.sysprocesses where spid = 1
+
+select name as 'Name', state_desc as 'Status', user_access_desc as 'Acesso', recovery_model_desc as 'Recovery Model' from sys.databases
+
+
+SELECT 
+	Session_ID, Blocking_Session_id As Blocking_ID, 
+	(SELECT NAME FROM SYS.DATABASES WHERE DATABASE_ID='5') AS 'Database', 
+	Start_time, Status, Command
+FROM 
+	SYS.DM_EXEC_REQUESTS 
+WHERE 
+	BLOCKING_SESSION_ID <> 0 ORDER BY start_time 

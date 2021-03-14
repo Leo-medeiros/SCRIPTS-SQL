@@ -1,0 +1,33 @@
+---------------------------------------------------------------------------
+CONTROLE DE VERSÃO DO CHECKLIST:
+---------------------------------------------------------------------------
+
+Autor: Luiz Vitor
+Data: 23/08/2018
+Versão: 1.0.3
+Descrição: 
+-> Alteração no Espaço em Disco, estava listando apenas os discos que tinham arquivos do SQL Server.
+---------------------------------------------------------------------------
+
+---------------------------------------------------------------------------
+Autor: Alan Mairinck
+Data: 08/05/2018
+Versão: 1.0.2
+Descrição: 
+-> Correção de Bug no Item Jobs que Falharam. Replace para caracteres HTML na coluna de texto.
+---------------------------------------------------------------------------
+
+---------------------------------------------------------------------------
+Autor: Alan Mairinck
+Data: 27/04/2018
+Versão: 1.0.1
+Descrição: 
+-> Parametrização da procedure [stpEnvia_CheckList_Diario_DBA].
+---------------------------------------------------------------------------
+
+---------------------------------------------------------------------------
+Autor: Luiz Vitor
+Data: 12/03/2018
+Versão: 1.0.0
+Descrição: Versão Inicial do Checklist.
+---------------------------------------------------------------------------

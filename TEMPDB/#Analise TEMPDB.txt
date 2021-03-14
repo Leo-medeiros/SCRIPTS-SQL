@@ -1,0 +1,25 @@
+
+dbcc opentran (tempdb)
+
+use tempdb
+
+checkpoint
+
+dbcc loginfo 
+
+dbcc shrinkfile (2)
+
+--===========================================================================================
+
+
+use tempdb
+go
+checkpoint
+go
+-- Elimina as informações referentes aos planos de execução compilados e armazenados 
+dbcc freeproccache
+go
+-- Remove todos os buffers limpos do buffer pool
+dbcc dropcleanbuffers
+go
+dbcc shrinkfile(tempdev,1024)

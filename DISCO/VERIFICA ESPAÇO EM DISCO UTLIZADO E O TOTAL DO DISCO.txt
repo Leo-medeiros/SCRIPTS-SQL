@@ -1,0 +1,12 @@
+--SCRIPT VERIFICA ESPAÇO EM DISCO UTLIZADO E O TOTAL DO DISCO
+
+SELECT
+
+	DISTINCT(VOLUME_MOUNT_POINT),total_bytes/1048576 
+	[Size_in_MB], available_bytes/1048576 [Free_in_MB],
+	(SELECT ((available_bytes/1048576*1.0)/
+	(total_bytes/1048576*1.0)*100)) [free_%],
+	FROM sys.master_files F 
+	CROSS APPLY sys.dm.os_volume_stats(f.database_id,f.file_id)
+	GROUP BY volume_mount_point,total_bytes/1048576,
+	available_bytes/1048576 order by 1

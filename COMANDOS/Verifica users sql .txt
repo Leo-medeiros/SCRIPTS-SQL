@@ -1,0 +1,10 @@
+select name,* from sys.syslogins 
+where isntname = 0
+and name not in ('##MS_SQLResourceSigningCertificate##',
+'##MS_SQLReplicationSigningCertificate##',
+'##MS_SQLAuthenticatorCertificate##',
+'##MS_PolicySigningCertificate##',
+'##MS_SmoExtendedSigningCertificate##',
+'##MS_PolicyEventProcessingLogin##',
+'##MS_PolicyTsqlExecutionLogin##',
+'##MS_AgentSigningCertificate##')

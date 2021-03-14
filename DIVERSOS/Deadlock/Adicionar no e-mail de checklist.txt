@@ -1,0 +1,36 @@
+/***********************************************************************************************************************************
+	--	Deadlock - Header
+	***********************************************************************************************************************************/ 
+	DECLARE @Deadlock_Header VARCHAR(MAX)
+	SET @Deadlock_Header = '<font color=black size=5>'
+	SET @Deadlock_Header = @Deadlock_Header + '<br/> TOP 10 - Deadlocks - Últimos 10 Dias <br/>' 
+	SET @Deadlock_Header = @Deadlock_Header + '</font>'
+
+	------------------------------------------------------------------------------------------------------------------------------------
+	--	Queries Demoradas Geral - Informações
+	------------------------------------------------------------------------------------------------------------------------------------
+	DECLARE @Deadlock_Table VARCHAR(MAX)    
+	SET @Deadlock_Table = CAST( (    
+		SELECT td =				  [Data]	+ 
+					'</td><td>' + [QTD]		+	'</td>'                                     
+		FROM (	
+				SELECT	[Data], 
+						ISNULL(CAST([QTD] AS VARCHAR), '-')		AS [QTD]
+				FROM [dbo].[CheckList_XEvents_Deadlock_Geral]
+				
+			  ) AS D ORDER BY [Data] DESC
+		FOR XML PATH( 'tr' ), TYPE ) AS VARCHAR(MAX) 
+	)   
+      
+    SET @Deadlock_Table = REPLACE( REPLACE( REPLACE(@Deadlock_Table, '&lt;', '<'), '&gt;', '>'), '<td>', '<td align=center>')
+    
+	SET @Deadlock_Table = 
+			'<table cellspacing="2" cellpadding="5" border="3">'    
+            +	'<tr>
+					<th width="200" bgcolor=#0B0B61><font color=white>Data</font></th>
+					<th width="200" bgcolor=#0B0B61><font color=white>Quantidade</font></th>      
+				</tr>'    
+            + REPLACE( REPLACE(@Deadlock_Table, '&lt;', '<'), '&gt;', '>')
+            + '</table>'
+
+

@@ -1,0 +1,40 @@
+SELECT name,
+       CONVERT(VARCHAR(15), createdate, 103) + ' '+ CONVERT(VARCHAR(15), createdate, 108)[create_date],
+       CASE processadmin
+           WHEN 1 THEN 'SIM'
+           ELSE 'NAO'
+       END [processadmin],
+       CASE securityadmin
+           WHEN 1 THEN 'SIM'
+           ELSE 'NAO'
+       END securityadmin,
+       CASE serveradmin
+           WHEN 1 THEN 'SIM'
+           ELSE 'NAO'
+       END serveradmin,
+       CASE setupadmin
+           WHEN 1 THEN 'SIM'
+           ELSE 'NAO'
+       END setupadmin,
+       CASE sysadmin
+           WHEN 1 THEN 'SIM'
+           ELSE 'NAO'
+       END sysadmin,
+       CASE diskadmin
+           WHEN 1 THEN 'SIM'
+           ELSE 'NAO'
+       END diskadmin,
+       CASE dbcreator
+           WHEN 1 THEN 'SIM'
+           ELSE 'NAO'
+       END dbcreator,
+       CASE bulkadmin
+           WHEN 1 THEN 'SIM'
+           ELSE 'NAO'
+       END bulkadmin,
+       loginname
+FROM SYS.syslogins
+WHERE name = 'CE-SDXCORP\Brenda.Contador^'
+GO
+
+select @@SERVERNAME [servidor], GETDATE() [data]

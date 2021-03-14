@@ -1,0 +1,21 @@
+-- Lista Objetos de Usuario na database master
+use master
+
+SELECT
+    --o.*,
+    o.name as object_name, 
+    o.type,
+    o.type_desc,
+    o.create_date,
+    o.modify_date,
+    s.name as schema_name,
+    ISNULL(po.name, ps.name) AS object_owner
+FROM sys.all_objects o
+INNER JOIN sys.schemas s on o.schema_id = s.schema_id
+LEFT OUTER JOIN sys.database_principals po ON o.principal_id = po.principal_id
+LEFT OUTER JOIN sys.database_principals ps ON s.principal_id = ps.principal_ID
+where 
+	ISNULL(po.name, ps.name) NOT IN('sys','INFORMATION_SCHEMA')		-- object_owner
+	AND o.type_desc NOT IN('SERVICE_QUEUE', 'DEFAULT_CONSTRAINT')
+	and o.is_ms_shipped = 0
+order by o.type_desc, o.name

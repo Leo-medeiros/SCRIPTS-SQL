@@ -1,0 +1,76 @@
+
+if OBJECT_ID('tempdb..#DesligaWitness') is not null drop table #DesligaWitness
+create Table #DesligaWitness (Id int identity, comando varchar(4000))
+
+
+/* 
+Verifica uma vez se tem problema
+Espera 30 segundos
+Verifica pela segunda vez se tem problema
+Espera 30 segundos
+Verifica pela terceira vez se tem problema
+Retira o witness do mirror
+*/
+
+if exists(select mirroring_witness_state_desc
+FROM sys.database_mirroring m
+JOIN sys.databases db ON db.database_id = m.database_id
+WHERE mirroring_witness_state_desc = 'DISCONNECTED'
+	and  mirroring_role_desc = 'PRINCIPAL' )
+begin
+	waitfor delay '00:00:30'
+
+	if exists(select mirroring_witness_state_desc
+	FROM sys.database_mirroring m
+	JOIN sys.databases db ON db.database_id = m.database_id
+	WHERE mirroring_witness_state_desc = 'DISCONNECTED'
+		and  mirroring_role_desc = 'PRINCIPAL' )
+	begin
+	
+		waitfor delay '00:00:30'
+		
+		if exists(select mirroring_witness_state_desc
+		FROM sys.database_mirroring m
+		JOIN sys.databases db ON db.database_id = m.database_id
+		WHERE mirroring_witness_state_desc = 'DISCONNECTED'
+			and  mirroring_role_desc = 'PRINCIPAL' )
+		begin
+			--código que retira o witness do mirror
+						
+			insert into #DesligaWitness(comando)
+			select 'if exists(select mirroring_witness_state_desc
+			FROM sys.database_mirroring m
+			JOIN sys.databases db ON db.database_id = m.database_id
+			WHERE Name = '''+name+ ''' 
+				and mirroring_witness_state_desc = ''DISCONNECTED''
+				and  mirroring_role_desc = ''PRINCIPAL''
+			)
+			begin
+			ALTER DATABASE ' + name+ ' set witness off
+			End'
+			FROM sys.database_mirroring m
+			JOIN sys.databases db ON db.database_id = m.database_id
+			where db.database_id >= 5
+			and mirroring_state is not null
+
+			declare @Id int, @comando varchar(4000)
+			set @Id = 1
+			while exists (select top 1 null from #DesligaWitness)
+			begin
+				select @comando = comando
+				from #DesligaWitness
+				where id = @Id
+				
+				exec(@comando)
+				
+				delete from #DesligaWitness
+				where ID = @Id
+				
+				set @Id = @Id + 1
+
+			end
+		
+		end
+	end
+
+end	

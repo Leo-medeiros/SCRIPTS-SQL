@@ -1,0 +1,130 @@
+SET NOCOUNT ON
+GO
+ 
+/** AUTHOR : Sasi Vardhan Thonangi
+ DATE : 28th Nov 2011
+ PURPOSE : Generate script to RESTORE DATABASES WITH MOVE for all the Backups in a single folder
+ REMARKS : set the @backupLocationFolder parameter to the folder that holds the backups.
+ @DataFileFolder : Parameter to hold the Default location of Datafiles
+ @LogFileFolder : Parameter to hold the Default Location of Logfiles
+sp_restoreFilelistOnly is inspired from the code at
+ http://troubleshootingsql.com/2010/07/17/converting-restore-filelistonly-command-into-restore-database-command/
+*/
+ 
+/* Create the temp SP sp_restoreFilelistOnly that would read the FILELISTONLY details
+*/
+IF EXISTS ( SELECT 1 from tempdb.sys.objects WHERE name LIKE '%#sp_restoreFilelistOnly%' )
+	DROP PROCEDURE #sp_restoreFilelistOnly
+
+GO
+
+CREATE PROCEDURE #sp_restoreFilelistOnly
+	@backupFileLocation VARCHAR(MAX)
+AS
+RESTORE FILELISTONLY FROM DISK = @backupFileLocation
+
+GO
+
+-- ALTERAR OS PARAMETROS AQUI
+DECLARE @backupLocationFolder VARCHAR(200),@DataFileFolder VARCHAR(200),@LogFileFolder VARCHAR(200),
+		@backupFileLocation VARCHAR(200),@SQL VARCHAR(max), @CaractereBackup VARCHAR(10)
+
+SET @backupLocationFolder = 'Z:\SQLServer\Backup\FULL'		-- Pasta com os Backups
+SET @DataFileFolder = 'C:\SQLServer\TesteRestore\Dados'		-- Pasta Destino dos arquivos MDF
+SET @LogFileFolder = 'C:\SQLServer\TesteRestore\Log'		-- Pasta Destino dos arquivos LDF
+SET @CaractereBackup = '_'									-- COLOCAR AQUI O PRIMEIRO CARACTERE APOS O NOME DA BASE. Ex: "_" - > "TesteDesenvolvimento_Dados.bak"
+ 
+
+IF EXISTS (SELECT 1 FROM tempdb.sys.objects WHERE name LIKE '%#FileListHeader_tab%')
+	DROP TABLE #FileListHeader_tab
+ELSE
+	CREATE TABLE #FileListHeader_tab
+	(
+		LogicalName VARCHAR(255),
+		PhysicalName VARCHAR(255),
+		Type VARCHAR(1),
+		FileGroupName VARCHAR(50),
+		Size BIGINT,
+		MaxSize BIGINT,
+		FileId INT,
+		CreateLSN NUMERIC(30,2),
+		DropLSN NUMERIC(30,2),
+		UniqueId UNIQUEIDENTIFIER,
+		ReadOnlyLSN NUMERIC(30,2),
+		ReadWriteLSN NUMERIC(30,2),
+		BackupSizeInBytes BIGINT,
+		SourceBlockSize INT,
+		FileGroupId INT,
+		LogGroupGUID UNIQUEIDENTIFIER,
+		DifferentialBaseLSN NUMERIC(30,2),
+		DifferentialBaseGUID UNIQUEIDENTIFIER,
+		IsReadOnly INT,
+		IsPresent INT,
+		TDEThumbprint varbinary(32),	-- remove this column if using SQL 2005
+		SnapshotURL nvarchar(360)		-- include this column if using SQL 2016
+	)
+
+
+
+DECLARE @sql_stat NVARCHAR(MAX)
+
+IF (OBJECT_ID('tempdb..#filelist_tab') IS NOT NULL)
+	DROP TABLE #filelist_tab
+
+create table #filelist_tab(
+	[fname] varchar(500),
+	[depth] TINYINT,
+	[file] TINYINT
+)
+
+INSERT INTO #filelist_tab([fname], [depth], [file])
+EXEC master.dbo.xp_dirtree @backupLocationFolder, 1, 1
+ 
+DECLARE fileName_cur CURSOR
+FOR
+SELECT fname FROM #filelist_tab
+WHERE fname != 'NULL'
+OPEN fileName_cur
+DECLARE @fname varchar(200)
+FETCH NEXT FROM fileName_cur INTO @fname
+
+SET @SQL = '
+'
+
+PRINT @SQL
+ 
+WHILE (@@FETCH_STATUS = 0)
+BEGIN
+	SET @backupFileLocation = @backupLocationFolder+'\'+@fname
+
+	DELETE from #FileListHeader_tab
+
+	INSERT into #FileListHeader_tab
+	EXEC #sp_restoreFilelistOnly @backupFileLocation
+
+	SET @SQL = 'RESTORE DATABASE ['+SUBSTRING(@fname,1,CHARINDEX(@CaractereBackup,@fname)-1) +
+	'] from disk='''+@backupLocationFolder+'\'+@fname+ ''' WITH ' --''' WITH STATS = 10, '
+ 
+	SELECT @SQL = @SQL + char(13) + ' MOVE ''' + LogicalName + ''' TO N''' +
+	CASE flht.[TYPE]
+	 WHEN 'D' THEN @DataFileFolder
+	 WHEN 'L' THEN @LogFileFolder
+	END +'\'+ LogicalName +
+	 '.' + RIGHT(PhysicalName,CHARINDEX('\',PhysicalName)) + ''','
+	FROM #FileListHeader_tab as flht
+ 
+	SET @SQL = SUBSTRING(@SQL,1,LEN(@SQL)-1) + '
+	'
+ 
+	PRINT @SQL
+ 
+	FETCH NEXT FROM fileName_cur INTO @fname;
+ 
+END
+CLOSE fileName_cur
+DEALLOCATE fileName_cur
+
+GO
+
+DROP TABLE #FileListHeader_tab
+DROP TABLE #filelist_tab

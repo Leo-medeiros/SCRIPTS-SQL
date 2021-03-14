@@ -1,0 +1,10 @@
+-- LISTA MAIORES OFENSORES, NESTE CASO OFENSORES DE CPU
+
+SELECT CAST(Dt_Log AS DATE) AS DATA, AVG(cast(Value as bigint)) AS VALOR
+FROM Traces.dbo.Log_Counter A
+    JOIN Traces.dbo.SQL_Counter B ON A.Id_Counter = B.Id_Counter
+WHERE DATEPART(dw,Dt_Log) between 2 and 6 -- Só de segunda a sexta
+--    and (Dt_Log <= '20141220' or Dt_Log >= '20150105') -- retira período de festas
+and datepart(hh,Dt_Log) between 7 and 19 -- Só em um horário com mais utilização
+and B.Nm_Counter = 'CPU'
+group by cast(Dt_Log as DATE)

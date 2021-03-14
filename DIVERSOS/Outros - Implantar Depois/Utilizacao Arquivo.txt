@@ -1,0 +1,132 @@
+
+GO
+
+use Traces
+
+GO
+
+/*******************************************************************************************************************************
+--	Utilização Arquivo
+*******************************************************************************************************************************/
+
+--------------------------------------------------------------------------------------------------------------------------------
+-- Cria Tabela de Historico
+--------------------------------------------------------------------------------------------------------------------------------
+IF (OBJECT_ID('[dbo].[Historico_Utilizacao_Arquivo]') IS NOT NULL)
+	DROP TABLE [dbo].[Historico_Utilizacao_Arquivo]
+
+CREATE TABLE [dbo].[Historico_Utilizacao_Arquivo] (
+	[Nm_Database] [nvarchar](128) NULL,
+	[file_id] [smallint] NOT NULL,
+	[io_stall_read_ms] [bigint] NOT NULL,
+	[num_of_reads] [bigint] NOT NULL,
+	[avg_read_stall_ms] [numeric](10, 1) NULL,
+	[io_stall_write_ms] [bigint] NOT NULL,
+	[num_of_writes] [bigint] NOT NULL,
+	[avg_write_stall_ms] [numeric](10, 1) NULL,
+	[io_stalls] [bigint] NULL,
+	[total_io] [bigint] NULL,
+	[avg_io_stall_ms] [numeric](10, 1) NULL,
+	[Dt_Registro] [datetime] NOT NULL
+) ON [PRIMARY]
+
+GO
+
+--------------------------------------------------------------------------------------------------------------------------------
+-- Cria Procedure para fazer a carga na tabela
+--------------------------------------------------------------------------------------------------------------------------------
+IF (OBJECT_ID('[dbo].[stpCarga_Historico_Utilizacao_Arquivo]') IS NOT NULL)
+	DROP PROCEDURE [dbo].[stpCarga_Historico_Utilizacao_Arquivo]
+GO
+
+CREATE PROCEDURE [dbo].[stpCarga_Historico_Utilizacao_Arquivo]
+AS
+BEGIN
+	INSERT INTO Traces.dbo.Historico_Utilizacao_Arquivo
+	SELECT DB_NAME(database_id) AS [Database Name]
+			, file_id 
+			, io_stall_read_ms
+			, num_of_reads
+			, CAST(io_stall_read_ms/(1.0 + num_of_reads) AS NUMERIC(10,1)) AS [avg_read_stall_ms]
+			, io_stall_write_ms
+			, num_of_writes
+			, CAST(io_stall_write_ms/(1.0+num_of_writes) AS NUMERIC(10,1)) AS [avg_write_stall_ms]
+			, io_stall_read_ms + io_stall_write_ms AS [io_stalls]
+			, num_of_reads + num_of_writes AS [total_io]
+			, CAST((io_stall_read_ms + io_stall_write_ms)/(1.0 + num_of_reads + num_of_writes) AS NUMERIC(10,1)) AS [avg_io_stall_ms]
+			, GETDATE() as [Dt_Registro]
+	FROM sys.dm_io_virtual_file_stats(null,null)
+END
+GO
+
+--------------------------------------------------------------------------------------------------------------------------------
+-- Cria o JOB
+--------------------------------------------------------------------------------------------------------------------------------
+USE [msdb]
+GO
+
+/****** Object:  Job [DBA - Carga Historico Utilização Arquivo]    Script Date: 02/15/2017 10:47:42 ******/
+BEGIN TRANSACTION
+DECLARE @ReturnCode INT
+SELECT @ReturnCode = 0
+/****** Object:  JobCategory [Database Maintenance]    Script Date: 02/15/2017 10:47:42 ******/
+IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'Database Maintenance' AND category_class=1)
+BEGIN
+EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'Database Maintenance'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+
+END
+
+DECLARE @jobId BINARY(16)
+EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'DBA - Carga Historico Utilização Arquivo', 
+		@enabled=1, 
+		@notify_level_eventlog=0, 
+		@notify_level_email=2, 
+		@notify_level_netsend=0, 
+		@notify_level_page=0, 
+		@delete_level=0, 
+		@description=N'Nenhuma descrição disponível.', 
+		@category_name=N'Database Maintenance', 
+		@owner_login_name=N'sa', 
+		@notify_email_operator_name=N'Alerta_BD', @job_id = @jobId OUTPUT
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+/****** Object:  Step [Carga Utilização Arquivo]    Script Date: 02/15/2017 10:47:48 ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Carga Utilização Arquivo', 
+		@step_id=1, 
+		@cmdexec_success_code=0, 
+		@on_success_action=1, 
+		@on_success_step_id=0, 
+		@on_fail_action=2, 
+		@on_fail_step_id=0, 
+		@retry_attempts=0, 
+		@retry_interval=0, 
+		@os_run_priority=0, @subsystem=N'TSQL', 
+		@command=N'EXEC [dbo].[stpCarga_Historico_Utilizacao_Arquivo]', 
+		@database_name=N'Traces', 
+		@flags=0
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'DIARIO - A CADA 30 MINUTOS', 
+		@enabled=1, 
+		@freq_type=8, 
+		@freq_interval=126, 
+		@freq_subday_type=4, 
+		@freq_subday_interval=30, 
+		@freq_relative_interval=0, 
+		@freq_recurrence_factor=1, 
+		@active_start_date=20161110, 
+		@active_end_date=99991231, 
+		@active_start_time=0, 
+		@active_end_time=235959, 
+		@schedule_uid=N'cd176e16-94e3-4911-9fb8-937d0c07a6e0'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+COMMIT TRANSACTION
+GOTO EndSave
+QuitWithRollback:
+    IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
+EndSave:
+
+GO

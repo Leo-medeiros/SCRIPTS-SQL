@@ -1,0 +1,9 @@
+OPEN SYMMETRIC KEY MyKey_security 
+DECRYPTION BY CERTIFICATE SQL_SECURITY WITH PASSWORD = 'pAA$$WOr6'
+
+ DECLARE @GUID UNIQUEIDENTIFIER = (SELECT KEY_GUID('MyKey_security'))
+
+ UPDATE usuarios SET senha = ENCRYPTBYKEY(@GUID,'Anjodeluz666')
+ where usuario = 'tvt.clayton.pereira' 
+ go
+ CLOSE SYMMETRIC KEY MyKey_security

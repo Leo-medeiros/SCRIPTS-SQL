@@ -1,0 +1,47 @@
+--=============================================================================
+--SCRIPT MOSTRA O STATUS DO MIRRORING - SCRIPT SEM ALTERAÇÃO 
+--=============================================================================
+
+SELECT SERVERPROPERTY('servername') as Instance_Name,SERVERPROPERTY('IsClustered') as IsClustered, 
+SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as ActiveNode, login_time as Startup_Date, 
+GETDATE() Data_Hora from sys.sysprocesses where spid = 1
+GO
+
+SELECT  db_name(sd.[database_id])              AS [Database Name]
+          ,sd.mirroring_state                  AS [Mirror State]
+          ,sd.mirroring_state_desc             AS [Mirror State]
+          ,sd.mirroring_partner_name           AS [Servidor Mirror]
+          ,sd.mirroring_role_desc              AS [Servidor Atual]  
+          ,sd.mirroring_safety_level_desc      AS [Safety Level]
+          --,sd.mirroring_witness_name           AS [Witness]
+          ,sd.mirroring_connection_timeout AS [Timeout(sec)]
+    FROM sys.database_mirroring AS sd
+    WHERE mirroring_guid IS NOT null
+	--WHERE sd.mirroring_state_desc <> 'SYNCHRONIZED'
+	--WHERE sd.mirroring_state_desc = 'SUSPENDED'
+
+
+SELECT SERVERPROPERTY('servername') as Instance_Name,SERVERPROPERTY('IsClustered') as IsClustered, 
+SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as ActiveNode, login_time as Startup_Date, 
+GETDATE() Data_Hora from sys.sysprocesses where spid = 1
+GO
+
+SELECT d.name, m.mirroring_role_desc,
+		       m.mirroring_state_desc,  m.mirroring_state,
+		       m.mirroring_safety_level_desc, 
+		       m.mirroring_partner_name, m.mirroring_partner_instance
+		      -- m.mirroring_witness_name, m.mirroring_witness_state_desc
+FROM   sys.database_mirroring m JOIN sys.databases d
+ON     m.database_id = d.database_id
+WHERE  mirroring_state_desc IS NOT NULL
+
+
+
+--
+--=============================================================================
+--SCRIPT MOSTRA O STATUS DO MIRRORING - SCRIPT ALTERADO POR EZEQUIEL
+--=============================================================================
+--
+
+
+

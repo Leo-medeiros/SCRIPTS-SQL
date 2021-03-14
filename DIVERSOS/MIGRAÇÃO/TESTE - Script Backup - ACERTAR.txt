@@ -1,0 +1,8 @@
+•	Segue abaixo o script para fazer o Backup Full de todas as databases:
+•	OBS: Alterar o caminho e conferir as databases.
+
+SELECT 
+'BACKUP DATABASE [' + name + '] TO DISK = ''C:SQLServer\' + name + '_Dados.bak'' WITH FORMAT, CHECKSUM, COMPRESSION, STATS = 1'
+FROM sys.databases
+WHERE name NOT IN ('master','model','msdb','tempdb','ReportServer','ReportServerTempDB')
+ORDER BY name

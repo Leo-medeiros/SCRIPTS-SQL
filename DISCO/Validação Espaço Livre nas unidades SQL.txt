@@ -1,0 +1,18 @@
+use master
+go
+ 
+select 
+distinct ServerProperty('ServerName')as Server_Name, 
+CASE WHEN SERVERPROPERTY('ComputerNamePhysicalNetBIOS') IS NULL THEN CONVERT(varchar(254),SERVERPROPERTY('ServerName')) 
+ELSE CONVERT(varchar(254),SERVERPROPERTY('ComputerNamePhysicalNetBIOS')) 
+END AS [Server_PhysicalName],
+UPPER(volume_mount_point) as Disk_Volume, 
+v.logical_volume_name as Volume_Name,
+total_bytes/1024/1024 as Total_MB,
+(total_bytes/1024/1024) - (available_bytes/1024/1024) as Used_MB,
+available_bytes/1024/1024 as Available_MB,
+substring(cast((cast(available_bytes as numeric(18))/cast(total_bytes as numeric(18)))*100 as varchar(50)),1,5) as Free_Perc
+from sys.master_files as f
+cross apply sys.dm_os_volume_stats(f.database_id,f.file_id) v
+order by  Free_Perc
+go

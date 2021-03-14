@@ -1,0 +1,51 @@
+if OBJECT_ID('tempdb..#LigaWitness') is not null drop table #LigaWitness
+create Table #LigaWitness (Id int identity, comando varchar(4000))
+
+if exists(
+select mirroring_witness_state_desc
+FROM sys.database_mirroring m
+JOIN sys.databases db ON db.database_id = m.database_id
+WHERE mirroring_witness_state_desc = 'UNKNOWN'
+	and  mirroring_role_desc = 'PRINCIPAL')
+	
+	
+begin
+	insert into #LigaWitness(comando)
+	select 'if exists(select mirroring_witness_state_desc
+	FROM sys.database_mirroring m
+	JOIN sys.databases db ON db.database_id = m.database_id
+	WHERE Name = '''+name+ ''' 
+		and mirroring_witness_state_desc = ''UNKNOWN''
+		and  mirroring_role_desc = ''PRINCIPAL''
+	)
+	begin
+	ALTER DATABASE ' + name+ ' SET witness = N''TCP://BD-WITNESS.datacenter.corp:5022''
+
+	End'
+	FROM sys.database_mirroring m
+	JOIN sys.databases db ON db.database_id = m.database_id
+	where db.database_id >= 5
+	and mirroring_state is not null
+	and mirroring_witness_state_desc = 'UNKNOWN'
+
+	declare @Id int, @comando varchar(4000)
+	set @Id = 1
+	while exists (select top 1 null from #LigaWitness)
+	begin
+		select @comando = comando
+		from #LigaWitness
+		where id = @Id
+		
+		--select @comando
+		exec(@comando)
+		
+		waitfor delay '00:00:05'
+		
+		delete from #LigaWitness
+		where ID = @Id
+		
+		set @Id = @Id + 1
+
+	end
+	
+end

@@ -1,0 +1,22 @@
+DBCC TRACEON (3604);
+GO
+DBCC DBINFO ('NomeDatabase');
+GO
+
+/*
+
+DBINFO @0x000000610BAAD580
+
+dbi_version = 852                   dbi_createVersion = 611
+
+https://www.sqlskills.com/blogs/paul/checkdb-from-every-angle-how-to-tell-if-data-purity-checks-will-be-run/
+
+If the dbi_createVersion is 611 or higher, the database was created on SQL Server 2005+ and will always have data purity checks performed.
+
+This database has a dbi_createVersion lower than 611, so we need to look at the dbi_dbccFlags field. A value of 0 means that the data purity checks are not enabled by default. A value of 2 means they are enabled by default. You can easily check this out for your own databases.
+
+So, if you have a database that was upgraded and you want to run the data purity checks, you need to use the WITH DATA_PURITY option for DBCC CHECKDB. 
+
+DBCC CHECKDB(NomeDatabase) WITH DATA_PURITY
+
+*/

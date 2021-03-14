@@ -1,0 +1,28 @@
+-- Verifica se existem locks no Database ID=5  -- IMPORTANTE: Lembre-se de substituir para o ID do seu database
+
+SELECT 
+	Session_ID, Blocking_Session_id As Blocking_ID, 
+	(SELECT NAME FROM SYS.DATABASES WHERE DATABASE_ID='5') AS 'Database', 
+	Start_time, Status, Command
+FROM 
+	SYS.DM_EXEC_REQUESTS 
+WHERE 
+	BLOCKING_SESSION_ID <> 0 ORDER BY start_time 
+
+-- Obs: Em caso de retorno de sessões em lock, usar os scripts abaixo para verificar o que estas sessões estão fazendo.
+
+DBCC INPUTBUFFER (148)
+
+SELECT 
+	spid, blocked, lastwaittype, 
+Case when dbid = 5 
+	then 'ARSYSTEM' END AS 'database',
+	login_time, last_batch, status, 
+	hostname, cmd, loginame
+FROM sys.sysprocesses WHERE spid='148'
+
+--SELECT spid, blocked, lastwaittype, dbid, login_time, last_batch, status, hostname, program_name, cmd, loginame FROM SYS.sysprocesses WHERE spid='148'
+
+
+
+

@@ -1,0 +1,83 @@
+
+select  SERVERPROPERTY('servername') as Instance_Name,
+		SERVERPROPERTY('IsClustered') as IsClustered, 
+		SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as ActiveNode, login_time as Startup_Date, 
+		GETDATE() Data_Hora, 
+		SERVERPROPERTY('edition') as SQL_Edition,
+		SERVERPROPERTY('productversion') as SQL_Version,
+		SERVERPROPERTY('productlevel') as SQL_ServicePack
+from sys.sysprocesses where spid = 1
+
+select name as 'Name', 
+	Case is_read_only 
+		when 0 then 'TRUE'
+		when 1 then 'FALSE' 
+		end as 'ReadWrite', 
+		state_desc as 'Status', user_access_desc as 'Acesso', recovery_model_desc as 'Recovery Model' 
+from sys.databases --WHERE NAME ='YourDatabase1' OR NAME ='YourDatabase2'
+ORDER BY STATE_DESC 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+select  SERVERPROPERTY('servername') as Instance_Name,
+		SERVERPROPERTY('IsClustered') as IsClustered, 
+		SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as ActiveNode, login_time as Startup_Date, 
+		GETDATE() Data_Hora, 
+		SERVERPROPERTY('edition') as SQL_Edition,
+		SERVERPROPERTY('productversion') as SQL_Version,
+		SERVERPROPERTY('productlevel') as SQL_ServicePack
+from sys.sysprocesses where spid = 1
+
+select name as 'Name', state_desc as 'Status', user_access_desc as 'Acesso', recovery_model_desc as 'Recovery Model' from sys.databases
+
+
+
+
+
+select  SERVERPROPERTY('servername') as Instance_Name,
+		SERVERPROPERTY('IsClustered') as IsClustered, 
+		SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as ActiveNode, login_time as Startup_Date, 
+		GETDATE() Data_Hora, 
+		SERVERPROPERTY('edition') as SQL_Edition,
+		SERVERPROPERTY('productversion') as SQL_Version,
+		SERVERPROPERTY('productlevel') as SQL_ServicePack
+from sys.sysprocesses where spid = 1
+
+
+Select 'Não existem Locks de Transações' as Situação
+Select * from sys.sysprocesses where blocked <> 0
+
+Select 'Bases de Dados ONLINEs e Operacionais' as Situação
+select name as 'Name', state_desc as 'Status', user_access_desc as 'Acesso', recovery_model_desc as 'Recovery Model' from sys.databases
+
+
+
+
+
+--select SERVERPROPERTY('servername') as Instance_Name,SERVERPROPERTY('IsClustered') as IsClustered, SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as ActiveNode, login_time as Startup_Date, GETDATE() Data_Hora from sysprocesses where spid = 1
+--select SERVERPROPERTY('edition') as SQL_Edition,SERVERPROPERTY('productversion') as SQL_Version,SERVERPROPERTY('productlevel') as SQL_ServicePack
+--select name as Database_Name,DatabasePropertyEx(name,'Status') as Database_Status from sysdatabases 
+
+
+--select SERVERPROPERTY('servername') as Instance_Name,SERVERPROPERTY('IsClustered') as IsClustered, SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as ActiveNode, login_time as Startup_Date, GETDATE() Data_Hora from sysprocesses where spid = 1
+--select SERVERPROPERTY('edition') as SQL_Edition,SERVERPROPERTY('productversion') as SQL_Version,SERVERPROPERTY('productlevel') as SQL_ServicePack
+--SELECT NAME as 'Database Name', STATE_DESC as Status FROM SYS.DATABASES
+
+
+
+--select SERVERPROPERTY('servername') as Instance_Name,SERVERPROPERTY('IsClustered') as IsClustered, SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as ActiveNode, login_time as Startup_Date, GETDATE() Data_Hora from sysprocesses where spid = 1
+--select SERVERPROPERTY('edition') as SQL_Edition,SERVERPROPERTY('productversion') as SQL_Version,SERVERPROPERTY('productlevel') as SQL_ServicePack
+--select name as 'Name', state_desc as 'Status', user_access_desc as 'Acesso', recovery_model_desc as 'Recovery Model' from sys.databases
+--GO
+

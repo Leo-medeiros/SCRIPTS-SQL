@@ -1,0 +1,195 @@
+/*  --query para gerar o script
+select 'if exists(select mirroring_witness_state_desc
+FROM sys.database_mirroring m
+JOIN sys.databases db ON db.database_id = m.database_id
+WHERE Name = '''+name+ ''' 
+	and mirroring_witness_state_desc = ''DISCONNECTED''
+	and  mirroring_role_desc = ''PRINCIPAL''
+)
+begin
+ALTER DATABASE ' + name+ ' set witness off
+End',*
+FROM sys.database_mirroring m
+JOIN sys.databases db ON db.database_id = m.database_id
+where db.database_id >= 5
+
+*/
+
+use master
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'velozclick'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE velozclick set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'poupafarma_institucional'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE poupafarma_institucional set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'geceloss'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE geceloss set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'katelpdv'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE katelpdv set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'katel'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE katel set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'tecsub'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE tecsub set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'ts541'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE ts541 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'crs'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE crs set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'objetivoead'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE objetivoead set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'tunibra'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE tunibra set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'atac'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE atac set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'objetivo'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE objetivo set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'hotsite_objetivoportal'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE hotsite_objetivoportal set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'TRI_ESPORTES_PORTAL'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE TRI_ESPORTES_PORTAL set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'triesportes'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE triesportes set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'sat_atribuna'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE sat_atribuna set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'atribuna'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE atribuna set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'BASE_CEP'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE BASE_CEP set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'ipat'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE ipat set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'AtribunaAssinaturas'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE AtribunaAssinaturas set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'revenda'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE revenda set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLAB78AB'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLAB78AB set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLAB79CD'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLAB79CD set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLABAD58'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLABAD58 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLAB9327'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLAB9327 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLAB1236'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLAB1236 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLABXC25'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLABXC25 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLAB4094'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLAB4094 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLAB9142'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLAB9142 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLAB1877'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLAB1877 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLAB2541'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLAB2541 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLAB258X'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLAB258X set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLABUN65'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLABUN65 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLABJH18'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLABJH18 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLAB4510'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLAB4510 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLAB7755'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLAB7755 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLAB8788'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLAB8788 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLABOP45'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLABOP45 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLABKR67'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLABKR67 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'WSLABNMB9'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE WSLABNMB9 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'adhomologa'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE adhomologa set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'revenda_homologa'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE revenda_homologa set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = 'Teste_Mirror'    and mirroring_witness_state_desc = 'DISCONNECTED'   and  mirroring_role_desc = 'PRINCIPAL'  )  begin  ALTER DATABASE Teste_Mirror set witness off  End
+
+-------------------- JOB
+
+USE [msdb]
+GO
+
+/****** Object:  Job [DBA - Valida Status Mirror]    Script Date: 09/15/2014 23:24:48 ******/
+BEGIN TRANSACTION
+DECLARE @ReturnCode INT
+SELECT @ReturnCode = 0
+/****** Object:  JobCategory [Database Maintenance]    Script Date: 09/15/2014 23:24:48 ******/
+IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'Database Maintenance' AND category_class=1)
+BEGIN
+EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'Database Maintenance'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+
+END
+
+DECLARE @jobId BINARY(16)
+EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'DBA - Valida Status Mirror', 
+		@enabled=1, 
+		@notify_level_eventlog=0, 
+		@notify_level_email=2, 
+		@notify_level_netsend=0, 
+		@notify_level_page=0, 
+		@delete_level=0, 
+		@description=N'No description available.', 
+		@category_name=N'Database Maintenance', 
+		@owner_login_name=N'DATACENTER\Administrator', 
+		@notify_email_operator_name=N'ALERTA_BD', @job_id = @jobId OUTPUT
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+/****** Object:  Step [DBA - Valida Status Witness]    Script Date: 09/15/2014 23:24:49 ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'DBA - Valida Status Witness', 
+		@step_id=1, 
+		@cmdexec_success_code=0, 
+		@on_success_action=1, 
+		@on_success_step_id=0, 
+		@on_fail_action=2, 
+		@on_fail_step_id=0, 
+		@retry_attempts=0, 
+		@retry_interval=0, 
+		@os_run_priority=0, @subsystem=N'TSQL', 
+		@command=N'/*  --query para gerar o script
+select ''if exists(select mirroring_witness_state_desc
+FROM sys.database_mirroring m
+JOIN sys.databases db ON db.database_id = m.database_id
+WHERE Name = ''''''+name+ '''''' 
+	and mirroring_witness_state_desc = ''''DISCONNECTED''''
+	and  mirroring_role_desc = ''''PRINCIPAL''''
+)
+begin
+ALTER DATABASE '' + name+ '' set witness off
+End'',*
+FROM sys.database_mirroring m
+JOIN sys.databases db ON db.database_id = m.database_id
+where db.database_id >= 5
+
+*/
+
+use master
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''velozclick''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE velozclick set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''poupafarma_institucional''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE poupafarma_institucional set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''geceloss''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE geceloss set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''katelpdv''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE katelpdv set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''katel''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE katel set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''tecsub''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE tecsub set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''ts541''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE ts541 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''crs''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE crs set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''objetivoead''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE objetivoead set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''tunibra''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE tunibra set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''atac''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE atac set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''objetivo''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE objetivo set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''hotsite_objetivoportal''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE hotsite_objetivoportal set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''TRI_ESPORTES_PORTAL''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE TRI_ESPORTES_PORTAL set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''triesportes''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE triesportes set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''sat_atribuna''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE sat_atribuna set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''atribuna''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE atribuna set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''BASE_CEP''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE BASE_CEP set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''ipat''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE ipat set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''AtribunaAssinaturas''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE AtribunaAssinaturas set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''revenda''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE revenda set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLAB78AB''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLAB78AB set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLAB79CD''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLAB79CD set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLABAD58''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLABAD58 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLAB9327''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLAB9327 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLAB1236''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLAB1236 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLABXC25''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLABXC25 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLAB4094''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLAB4094 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLAB9142''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLAB9142 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLAB1877''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLAB1877 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLAB2541''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLAB2541 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLAB258X''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLAB258X set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLABUN65''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLABUN65 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLABJH18''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLABJH18 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLAB4510''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLAB4510 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLAB7755''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLAB7755 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLAB8788''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLAB8788 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLABOP45''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLABOP45 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLABKR67''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLABKR67 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''WSLABNMB9''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE WSLABNMB9 set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''adhomologa''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE adhomologa set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''revenda_homologa''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE revenda_homologa set witness off  End
+if exists(select mirroring_witness_state_desc  FROM sys.database_mirroring m  JOIN sys.databases db ON db.database_id = m.database_id  WHERE Name = ''Teste_Mirror''    and mirroring_witness_state_desc = ''DISCONNECTED''   and  mirroring_role_desc = ''PRINCIPAL''  )  begin  ALTER DATABASE Teste_Mirror set witness off  End
+', 
+		@database_name=N'master', 
+		@flags=0
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'DBA - Valida Status Witness', 
+		@enabled=1, 
+		@freq_type=4, 
+		@freq_interval=1, 
+		@freq_subday_type=4, 
+		@freq_subday_interval=1, 
+		@freq_relative_interval=0, 
+		@freq_recurrence_factor=0, 
+		@active_start_date=20140915, 
+		@active_end_date=99991231, 
+		@active_start_time=35, 
+		@active_end_time=235959, 
+		@schedule_uid=N'c0cd6d4b-72ba-4fa1-b189-a31c37b20973'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+COMMIT TRANSACTION
+GOTO EndSave
+QuitWithRollback:
+    IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
+EndSave:
+
+GO
+
+

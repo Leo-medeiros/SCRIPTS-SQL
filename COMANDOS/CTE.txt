@@ -1,0 +1,20 @@
+;WITH ContaLevel AS
+(select Organizationlevel,  count(*) Contador
+from [HumanResources].[Employee]
+group by Organizationlevel)
+
+select  distinct b.LoginId, b.jobTitle,a.Contador from ContaLevel a
+inner join [HumanResources].[Employee] b on a.Organizationlevel = b.Organizationlevel
+order by a.contador
+
+
+;WITH CTE_numerico (nivel, Numero)
+AS
+(
+	SELECT 1 AS nivel, 1 as numero
+	UNION ALL
+	SELECT nivel + 1, numero + numero from CTE_numerico
+	where numero < 2048
+
+)
+select * from CTE_numerico

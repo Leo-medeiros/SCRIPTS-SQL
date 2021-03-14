@@ -1,0 +1,96 @@
+
+  DECLARE @command varchar(max)
+
+
+
+SET QUOTED_IDENTIFIER off
+Declare  @table table 
+(
+  [Database] varchar(50),
+  [Schema] varchar(20),
+  [Table] varchar(50),
+  [Index] varchar(200),
+  partition_number float,
+  data_compression_desc varchar(20),
+  fill_factor int,
+  rows int,
+  Ds_Comando varchar(500)
+)
+SELECT @command = "
+
+
+SELECT '?' AS [Database], 
+	[s].[name] AS [Schema],
+	   [t].[name] AS [Table], 
+       [i].[name] AS [Index],  
+       [p].[partition_number] AS [Partition],
+       [p].[data_compression_desc] AS [Compression], 
+       [i].[fill_factor],
+       [p].[rows],
+			 'ALTER INDEX [' + [i].[name] + '] ON [' + [s].[name] + '].[' + [t].[name] + 
+			 '] REBUILD PARTITION = ALL WITH (DATA_COMPRESSION = PAGE' +
+			 CASE WHEN [i].[fill_factor] BETWEEN 1 AND 89 THEN ', FILLFACTOR = 90' ELSE '' END + ' )' AS Ds_Comando
+FROM [sys].[partitions] AS [p]
+INNER JOIN sys.tables AS [t] 
+     ON [t].[object_id] = [p].[object_id]
+INNER JOIN sys.indexes AS [i] 
+     ON [i].[object_id] = [p].[object_id] AND i.index_id = p.index_id
+INNER JOIN sys.schemas AS [s]
+		 ON [t].[schema_id] = [s].[schema_id]
+WHERE [p].[index_id] > 0
+			AND [i].[name] IS NOT NULL
+			--AND [p].[rows] > 10000
+			AND [p].[data_compression_desc] = 'NONE'"
+
+
+
+ Insert into @table
+
+
+EXEC sp_MSforeachdb @command
+
+
+
+
+
+
+
+ 
+select * from @table
+
+
+where [Database]NOT IN('master'
+
+
+,'model'
+
+
+,'msdb'
+
+
+,'tempdb'
+
+
+,'traces'
+
+
+,'reportserver'
+
+
+,'reportservertempdb')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

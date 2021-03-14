@@ -1,0 +1,53 @@
+
+-- VERIFICA O PAGE LIFE, VALOR RECOMENDADO 1500MS
+
+SELECT [object_name]
+    ,[counter_name]
+    ,[cntr_value] 
+FROM sys.dm_os_performance_counters
+WHERE [object_name] LIKE '%Manager%'
+AND [counter_name] = 'Page life expectancy'
+
+
+-----------------------------------------
+
+WITH 
+    tm_cte AS (
+        SELECT CONVERT(int, value_in_use) / 1024. [memory_gb],
+            CONVERT(int, value_in_use) / 1024. / 4. * 300 [counter_by_memory]
+        FROM sys.configurations
+        WHERE name like 'max server memory%'
+    ),
+    cached_cte AS (
+        SELECT 
+        COUNT(*) * 8. / 1024. / 1024. [cached_gb],
+            COUNT(*) * 8. / 1024. / 1024.  / 4. * 300 [counter_by_cache]
+        FROM [sys].[dm_os_buffer_descriptors]
+)
+SELECT CEILING(counter_by_memory) [Limite 1],
+    CEILING(counter_by_cache) [Limite 2]
+FROM tm_cte, cached_cte;
+
+--------------------------------------------------
+
+-- verifica as leituras no disco
+
+SELECT DB_NAME(database_id) AS DatabaseName,
+
+        FILE_ID,
+
+        FILE_NAME(FILE_ID) AS NAME,
+
+        D.io_stall_read_ms AS ReadsIOStall,
+
+        D.num_of_reads AS NumsReads,
+
+        CAST(D.io_stall_read_ms / (1.0 + num_of_reads) AS NUMERIC(10,1)) AS AvgReadsStall,
+
+        io_stall_read_ms + io_stall_write_ms AS IOStalls,
+
+        num_of_reads + num_of_writes AS TotalIO,
+
+        CAST(( io_stall_read_ms + io_stall_write_ms ) / (1.0 + num_of_reads + num_of_writes) AS NUMERIC(10,1)) AS AvgIOStall
+
+FROM sys.dm_io_virtual_file_stats(DB_ID(),NULL) AS D

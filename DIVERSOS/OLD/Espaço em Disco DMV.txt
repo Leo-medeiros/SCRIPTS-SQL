@@ -1,0 +1,36 @@
+
+ALTER PROCEDURE [dbo].[stpCheckList_Espaco_Disco]
+AS
+BEGIN
+       SET NOCOUNT ON
+
+              -- Cria a tabela que ira armazenar os dados dos processos
+       IF ( OBJECT_ID('tempdb..#Espaco_Disco_dmv') IS NOT NULL )
+              DROP TABLE #Espaco_Disco_dmv
+
+              SELECT DISTINCT 
+              volume_mount_point [Drive],             
+				CONVERT(DECIMAL(18,2),(total_bytes/1073741824.0)*1024.00) AS [Tamanho (MB)], ---1GB = 1073741824 bytes    
+				 CONVERT(DECIMAL(18,2),(available_bytes/1073741824.0)*1024.00) AS [Livre (MB)],  
+				 CONVERT(DECIMAL(18,2),((total_bytes - available_bytes)/1073741824.0)*1024.00) AS [Usado (MB)],  
+              CAST(CAST((total_bytes - available_bytes) AS FLOAT)/ CAST(total_bytes AS FLOAT) AS DECIMAL(18,2)) * 100 AS [Usado (%)] 
+              into #Espaco_Disco_dmv
+              from (select volume_mount_point ,  total_bytes ,max(available_bytes)   available_bytes        
+                     FROM sys.master_files 
+              CROSS APPLY sys.dm_os_volume_stats(database_id, file_id)
+              group by volume_mount_point ,  total_bytes 
+                     ) A
+	
+    TRUNCATE TABLE [dbo].[CheckList_Espaco_Disco]
+	
+	INSERT INTO [dbo].[CheckList_Espaco_Disco]( [DriveName], [TotalSize_GB], [FreeSpace_GB], [SpaceUsed_GB], [SpaceUsed_Percent] )
+	SELECT [Drive], [Tamanho (MB)], [Livre (MB)], [Usado (MB)], [Usado (%)] 
+	FROM #Espaco_Disco_dmv
+
+	IF (@@ROWCOUNT = 0)
+	BEGIN
+		INSERT INTO [dbo].[CheckList_Espaco_Disco]( [DriveName], [TotalSize_GB], [FreeSpace_GB], [SpaceUsed_GB], [SpaceUsed_Percent] )
+		SELECT 'Sem registro de Espaço em Disco', NULL, NULL, NULL, NULL
+	END
+END
+

@@ -1,0 +1,24 @@
+USE [Traces]
+GO
+
+/****** Object:  Table [dbo].[CheckList_XEvents_Deadlock_Geral]    Script Date: 27/10/2017 15:26:34 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+SET ANSI_PADDING ON
+GO
+
+CREATE TABLE [dbo].[CheckList_XEvents_Deadlock_Geral](
+	[Data] [varchar](50) NULL,
+	[QTD] [int] NULL
+) ON [PRIMARY]
+
+GO
+
+SET ANSI_PADDING OFF
+GO
+
+

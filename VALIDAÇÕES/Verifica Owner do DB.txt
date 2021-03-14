@@ -1,0 +1,13 @@
+
+SELECT databases.NAME as Banco,
+server_Principals.NAME as Owner
+FROM sys.[databases]
+INNER JOIN sys.[server_principals] ON [databases].owner_sid = [server_principals].sid
+
+----------------------------------------------------------------------
+altera owner
+select Banco,owner, 'ALTER AUTHORIZATION ON DATABASE::' +Banco+' TO' [CMD] from (
+SELECT databases.NAME as Banco,
+server_Principals.NAME as Owner
+FROM sys.[databases]
+INNER JOIN sys.[server_principals] ON [databases].owner_sid = [server_principals].sid)A

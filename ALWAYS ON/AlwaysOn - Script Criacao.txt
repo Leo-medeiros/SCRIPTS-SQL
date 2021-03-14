@@ -1,0 +1,57 @@
+
+if object_id('tempdb..#databases_AlwaysON') is not null
+	drop table #databases_AlwaysON
+
+select *
+into #databases_AlwaysON
+from sys.databases
+where name in ('CCAD','COMPMSADB','DBSSP','DesarrolloPLM3','EDICONVERSOR','EVDI','IDP','MAEKOTEI')
+
+declare @ALwaysOnName varchar(100),@backupnetworkpath varchar(128),@primary varchar(50), @secondary varchar(50)
+SELECT @backupnetworkpath  = '\\bd02\h$\',  
+@ALwaysOnName = 'AlwaysOnAG_2014',
+@primary = 'BRTAT-SQL-001',
+@secondary = 'BRTAT-SQL-002'
+
+
+print 'Rodar no servidor 1'
+select 'ALTER AVAILABILITY GROUP '+@ALwaysOnName+' ADD DATABASE '+name
+from #databases_AlwaysON
+
+
+SET NOCOUNT ON
+
+ 	
+         		
+            PRINT ''
+            PRINT ':CONNECT ' + @primary
+            SELECT  'BACKUP DATABASE [' + name + '] TO  DISK = N''' + @backupnetworkpath + name
+                    + '.bak'' WITH NOFORMAT, INIT,  NAME = N''' + name
+                    + '-Full Database Backup'', SKIP, NOREWIND, NOUNLOAD,  STATS = 10, COMPRESSION'
+            FROM    #databases_AlwaysON
+
+
+            PRINT ''
+            SELECT  'BACKUP LOG [' + name + '] TO  DISK = N''' + @backupnetworkpath + name
+                    + '_Log.bak'' WITH NOFORMAT, INIT,  NAME = N''' + name
+                    + '-Transaction Log  Backup'', SKIP, NOREWIND, NOUNLOAD,  STATS = 10, COMPRESSION'
+            FROM    #databases_AlwaysON
+
+             PRINT ''
+            PRINT ':CONNECT ' + @secondary
+            SELECT  'RESTORE DATABASE [' + name + '] FROM  DISK = N''' + @backupnetworkpath + name
+                    + '.bak'' WITH  FILE = 1,  NORECOVERY,  NOUNLOAD,  REPLACE, STATS = 10'
+            FROM    #databases_AlwaysON
+
+            SELECT  'RESTORE LOG [' + name + '] FROM  DISK = N''' + @backupnetworkpath + name
+                    + '_log.bak'' WITH  FILE = 1,  NORECOVERY,  NOUNLOAD,  STATS = 10'
+            FROM    #databases_AlwaysON
+
+            PRINT ''
+
+         
+		 
+print 'Rodar no servidor 2'
+
+select 'ALTER DATABASE '+name+' SET HADR AVAILABILITY GROUP = '+@ALwaysOnName
+from #databases_AlwaysON

@@ -1,0 +1,17 @@
+
+
+select SERVERPROPERTY('servername') as Instance_Name,SERVERPROPERTY('IsClustered') as IsClustered, SERVERPROPERTY('ComputerNamePhysicalNetBIOS') as ActiveNode, login_time as Startup_Date, GETDATE() Data_Hora from sys.sysprocesses where spid = 1
+go
+
+SELECT
+CAST(sysfiles.size/128.0 AS int) AS FileSizeMB,
+sysfiles.name AS LogicalFileName, sysfiles.filename AS PhysicalFileName,
+CONVERT(sysname,DatabasePropertyEx('pr269','Status')) AS Status,
+CONVERT(sysname,DatabasePropertyEx('pr269','Updateability')) AS Updateability,
+CONVERT(sysname,DatabasePropertyEx('pr269','Recovery')) AS RecoveryMode,
+CAST(sysfiles.size/128.0 - CAST(FILEPROPERTY(sysfiles.name,  + '' +
+       'SpaceUsed' + '' + '' ) AS int)/128.0 AS int) AS FreeSpaceMB,
+CAST(100 * (CAST (((sysfiles.size/128.0 -CAST(FILEPROPERTY(sysfiles.name,
++ '' + 'SpaceUsed' + '' + '' ) AS int)/128.0)/(sysfiles.size/128.0))
+AS decimal(4,2))) AS varchar(8)) + '' + '' + '%' + '' + '' AS 'FreeSpace%'
+FROM dbo.sysfiles

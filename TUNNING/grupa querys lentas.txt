@@ -1,0 +1,23 @@
+
+    
+
+-- Verifica as Queries Lentas de um periodo - Agrupadas
+
+select substring(TextData,1,150), count(*)
+
+from Traces.dbo.Queries_Profile (nolock)
+
+where        StartTime >= '20180101'
+
+-- and StartTime < '20180101'
+
+AND DATEPART(HOUR,StartTime) >= 8 AND DATEPART(HOUR,StartTime) <= 18
+
+and datepart(weekday,StartTime) > 1 AND datepart(weekday,StartTime) < 7                
+
+--AND substring(TextData,1,150) NOT LIKE '%%'                                                -- Query         
+
+group by substring(TextData,1,150)
+
+order by 2 DESC
+

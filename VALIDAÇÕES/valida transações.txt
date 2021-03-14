@@ -1,0 +1,20 @@
+SELECT B.NAME,
+       A.transaction_id [TRANSACTION-ID],
+       CASE A.database_transaction_type
+           WHEN 1 THEN 'READ/WRITE'
+           WHEN 2 THEN 'READ_ONLY'
+           WHEN 3 THEN 'SYSTEM_TRANSACTION'
+           ELSE ''
+       END [DATABASE_TRANSACTION_TYPE],
+       CASE a.database_transaction_state
+           WHEN 1 THEN 'The transaction has not been initialized'
+           WHEN 3 THEN 'The transaction has been initialized but has not generated any log records'
+           WHEN 4 THEN 'The transaction has generated log records'
+           WHEN 5 THEN 'The transaction has been prepared'
+           WHEN 10 THEN 'The transaction has been committed'
+           WHEN 11 THEN 'The transaction has been rolled back'
+           WHEN 12 THEN 'The transaction is being committed. (The log record is being generated, but has not been materialized or persisted.)'
+           ELSE ''
+       END [DATABASE_TRANSACTION_STATE]
+FROM [sys].[dm_tran_database_transactions] a
+INNER JOIN SYS.DATABASES B ON A.database_id = B.database_id

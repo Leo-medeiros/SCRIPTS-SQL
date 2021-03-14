@@ -1,0 +1,39 @@
+if OBJECT_ID('tempdb..#DesligaWitness') is not null drop table #DesligaWitness
+create Table #DesligaWitness (Id int identity, comando varchar(4000))
+
+insert into #DesligaWitness(comando)
+select 'if exists(select mirroring_witness_state_desc
+FROM sys.database_mirroring m
+JOIN sys.databases db ON db.database_id = m.database_id
+WHERE Name = '''+name+ ''' 
+	and mirroring_witness_state_desc = ''CONNECTED''
+	and  mirroring_role_desc = ''PRINCIPAL''
+)
+begin
+ALTER DATABASE ' + name+ ' set witness off
+End'
+FROM sys.database_mirroring m
+JOIN sys.databases db ON db.database_id = m.database_id
+where db.database_id >= 5
+and mirroring_state is not null
+and mirroring_witness_state_desc = 'CONNECTED'
+
+
+declare @Id int, @comando varchar(4000)
+set @Id = 1
+while exists (select top 1 null from #DesligaWitness)
+begin
+	select @comando = comando
+	from #DesligaWitness
+	where id = @Id
+	
+	--select @comando
+	exec(@comando)
+	waitfor delay '00:00:01'
+	
+	delete from #DesligaWitness
+	where ID = @Id
+	
+	set @Id = @Id + 1
+
+end

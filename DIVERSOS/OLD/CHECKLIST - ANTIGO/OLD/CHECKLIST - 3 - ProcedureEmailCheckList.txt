@@ -1,0 +1,721 @@
+
+/*
+	Alterar o profile e e-mail para os necessários:
+		@profile_name = 'MSSQLServer',
+		@recipients = 'fabricioflima@gmail.com', 
+		
+	Alterar o subject para a empresa que está sendo implementada:
+		SET @subject = 'CheckList Diário do Banco de Dados - Cartorio3Zona'   
+		
+		
+	Antes de testar o envio essas procedures abaixo devem ser executadas:
+		EXEC stpCheckList_Arquivos_MDF_LDF
+		EXEC stpCheckList_Database_Growth
+		EXEC stpCheckList_Table_Growth
+		EXEC stpCheckList_Backups_Executados
+		exec stpCheckList_Jobs_Failed
+		EXEC stpCheckList_Alteracao_Jobs
+		EXEC stpCheckList_Job_Demorados
+		exec stpCheckList_Traces_Queries
+		EXEC stpCheckList_Contadores
+		exec stpCheckList_Fragmentacao_Indices
+		exec stpCheckList_Waits_Stats
+		exec stpCheckList_SQLServer_ErrorLog
+		exec stpCheckList_Espaco_Disco
+*/
+
+Use Traces
+
+if OBJECT_ID('stpEnvia_CheckList_Diario_DBA') is not null
+	drop procedure stpEnvia_CheckList_Diario_DBA
+	GO
+	
+CREATE procedure [dbo].[stpEnvia_CheckList_Diario_DBA]
+AS
+DECLARE @Reportdate DATETIME
+SET @Reportdate =CONVERT(VARCHAR(10),GETDATE(),121)
+
+/**************************************************************
+			Espaço em disco Header
+***************************************************************/
+
+DECLARE @EspacoDiscoHeader VARCHAR(MAX)
+SET @EspacoDiscoHeader='<font 
+            color=black bold=true size= 5>'
+            
+SET @EspacoDiscoHeader=@EspacoDiscoHeader+'<BR /> Espaço em Disco <BR />' 
+SET @EspacoDiscoHeader=@EspacoDiscoHeader+'</font>'
+
+/**************************************************************
+			Espaço em disco - Informações
+***************************************************************/
+
+DECLARE @EspacoDiscoTable VARCHAR(MAX)    
+SET @EspacoDiscoTable= cast( (    
+SELECT td =  DriveName + 
+		'</td><td> ' + TotalSize_GB + 
+		'</td><td>'+  SpaceUsed_GB + 
+		'</td><td>'  + FreeSpace_GB + 
+		'</td><td>'  + SpaceUsed_Percent+ '</td><td align = center>' 
+
+FROM (           
+	SELECT DriveName,CAST(TotalSize_GB AS VARCHAR) TotalSize_GB,CAST(SpaceUsed_GB AS VARCHAR) SpaceUsed_GB,
+		CAST(FreeSpace_GB AS VARCHAR) FreeSpace_GB,CAST(SpaceUsed_Percent AS VARCHAR) SpaceUsed_Percent FROM Traces.dbo.CheckList_Espaco_Disco
+       
+      ) as d order by DriveName
+  FOR XML PATH( 'tr' ), Type ) AS VARCHAR(MAX) )   
+      
+    SET @EspacoDiscoTable = REPLACE( replace( replace( @EspacoDiscoTable, '&lt;', '<' ), '&gt;', '>' )    , '<td>', '<td align = center>')
+    
+  SET @EspacoDiscoTable= '<table cellpadding="0" cellspacing="0" border="3" >'    
+              + '<tr>
+              <th color="#23238E" width="50">Drive</th>
+              <th width="120">Tamanho (MB)</th>
+              <th width="120">Utilizado (MB)</th>
+              <th width="120">Livre (MB)</th>
+              <th width="120">Utilizado (%)</th>
+				</tr>'    
+              + replace( replace( @EspacoDiscoTable, '&lt;', '<' ), '&gt;', '>' )   
+              + '</table>' 
+              
+
+
+/**************************************************************
+			Arquivos MDF e LDF Header
+***************************************************************/
+
+DECLARE @ArquivosMDFLDF_Header VARCHAR(MAX)
+SET @ArquivosMDFLDF_Header='<font color=black bold=true size= 5>'
+SET @ArquivosMDFLDF_Header=@ArquivosMDFLDF_Header+'<BR/> Informações dos Arquivos .MDF e .LDF<BR/>' 
+SET @ArquivosMDFLDF_Header=@ArquivosMDFLDF_Header+'</font>'
+
+/**************************************************************
+			Arquivos MDF e LDF - Informações
+***************************************************************/
+
+DECLARE @ArquivosMDFLDF_Table VARCHAR(MAX)    
+SET @ArquivosMDFLDF_Table= cast( (    
+SELECT td =  Nm_Database + 
+		'</td><td>'+  Logical_Name + 
+		'</td><td>'  + Total_Reservado + 
+		'</td><td>'  + Total_Utilizado + 		
+		'</td><td>'  + [Espaco_Livre (MB)] + 
+		'</td><td>'  + [Espaco_Livre (%)] + 
+		'</td><td>'  + MAXSIZE + 	
+		'</td><td>'  + Growth+ '</td><td align = center>' 
+                                    
+FROM (           
+	 select Nm_Database,
+	Logical_Name, CAST(Total_Reservado AS VARCHAR) Total_Reservado,CAST(Total_Utilizado AS VARCHAR) Total_Utilizado,
+	CAST([Espaco_Livre (MB)] AS VARCHAR) [Espaco_Livre (MB)], CAST([Espaco_Livre (%)] AS VARCHAR) [Espaco_Livre (%)] ,
+	CAST(MaxSize AS VARCHAR) MAXSIZE,
+	CAST(Growth	AS VARCHAR) Growth
+from  Traces.dbo.CheckList_Arquivos_MDF_LDF
+       
+      ) as d order by len([Espaco_Livre (%)]) ,[Espaco_Livre (%)]
+  FOR XML PATH( 'tr' ), Type ) AS VARCHAR(MAX) )   
+      
+    SET @ArquivosMDFLDF_Table = REPLACE( replace( replace( @ArquivosMDFLDF_Table, '&lt;', '<' ), '&gt;', '>' )    , '<td>', '<td align = center>')
+    
+  SET @ArquivosMDFLDF_Table= '<table cellpadding="0" cellspacing="0" border="3" >'    
+              + '<tr>
+              <th width="170">Nome Database</th>
+              <th width="200">Nome Lógico</th>
+              <th width="120">Total Reservado (MB)</th>
+              <th width="120">Total Utilizado (MB)</th>
+              <th width="120">Espaco_Livre (MB)</th>
+              <th width="120">Espaco_Livre (%)</th>
+              <th width="120">MAXSIZE</th>
+              <th width="120">Growth</th>          
+				</tr>'    
+              + replace( replace( @ArquivosMDFLDF_Table, '&lt;', '<' ), '&gt;', '>' )   
+              + '</table>' 
+            
+
+/**************************************************************
+			Crescimento das Bases  Header
+***************************************************************/
+
+DECLARE @CrescimentoBases_Header VARCHAR(MAX)
+SET @CrescimentoBases_Header='<font color=black bold=true size= 5>'
+SET @CrescimentoBases_Header=@CrescimentoBases_Header+'<BR /> Crescimento das Bases' 
+SET @CrescimentoBases_Header=@CrescimentoBases_Header+'</font>'
+
+/**************************************************************
+			Crescimento das Bases - Informações
+***************************************************************/
+
+DECLARE @CrescimentoBases_Table VARCHAR(MAX)    
+SET @CrescimentoBases_Table= cast( (    
+SELECT td =  Nm_Database + 
+		'</td><td>'+  Tamanho_Atual + 
+		'</td><td>'  + Cresc_1_dia + 
+		'</td><td>'  + Cresc_15_dia + 		
+		'</td><td>'  + Cresc_30_dia + 
+		'</td><td>'  + Cresc_60_dia+ '</td><td align = center>' 
+                                    
+FROM (           
+	select Nm_Database,CAST(Tamanho_Atual AS VARCHAR) Tamanho_Atual,CAST(Cresc_1_dia AS VARCHAR) Cresc_1_dia,
+		CAST(Cresc_15_dia AS VARCHAR) Cresc_15_dia,
+		CAST(Cresc_30_dia AS VARCHAR) Cresc_30_dia,CAST(Cresc_60_dia AS VARCHAR) Cresc_60_dia
+	from Traces.dbo.CheckList_Database_Growth       
+      ) as d order by CAST(Tamanho_Atual  AS NUMERIC(15,2)) desc  
+  FOR XML PATH( 'tr' ), Type ) AS VARCHAR(MAX) )   
+      
+    SET @CrescimentoBases_Table = REPLACE( replace( replace( @CrescimentoBases_Table, '&lt;', '<' ), '&gt;', '>' )    , '<td>', '<td align = center>')
+    
+  SET @CrescimentoBases_Table= '<table cellpadding="0" cellspacing="0" border="3" >'    
+              + '<tr>
+              <th width="170">Nome Database</th>
+              <th width="120">Tamanho Atual (MB)</th>
+              <th width="120">Cresc. 1 Dia (MB)</th>
+              <th width="120">Cresc. 15 Dia (MB)</th>
+              <th width="120">Cresc. 30 Dia (MB)</th>
+              <th width="120">Cresc. 60 Dia (MB)</th>               
+				</tr>'    
+              + replace( replace( @CrescimentoBases_Table, '&lt;', '<' ), '&gt;', '>' )   
+              + '</table>' 
+                                                                                       
+/**************************************************************
+			Crescimento das Tabelas  Header
+***************************************************************/
+
+DECLARE @CrescimentoTabelas_Header VARCHAR(MAX)
+SET @CrescimentoTabelas_Header='<font color=black bold=true size= 5>'
+SET @CrescimentoTabelas_Header=@CrescimentoTabelas_Header+'<BR /> Crescimento das Tabelas' 
+SET @CrescimentoTabelas_Header=@CrescimentoTabelas_Header+'</font>'
+
+/**************************************************************
+			Crescimento das Tabelas - Informações
+***************************************************************/
+
+DECLARE @CrescimentoTabelas_Table VARCHAR(MAX)    
+SET @CrescimentoTabelas_Table= cast( (    
+SELECT td =  Nm_Database + 
+		'</td><td>'+  Nm_Tabela + 
+		'</td><td>'+  Tamanho_Atual + 
+		'</td><td>'  + Cresc_1_dia + 
+		'</td><td>'  + Cresc_15_dia + 		
+		'</td><td>'  + Cresc_30_dia + 
+		'</td><td>'  + Cresc_60_dia+ '</td><td align = center>' 
+                                    
+FROM (           
+
+		select Nm_Database,Nm_Tabela,CAST(Tamanho_Atual AS VARCHAR) Tamanho_Atual,CAST(Cresc_1_dia AS VARCHAR) Cresc_1_dia,
+			CAST(Cresc_15_dia AS VARCHAR)Cresc_15_dia,CAST(Cresc_30_dia AS VARCHAR)Cresc_30_dia,CAST(Cresc_60_dia  AS VARCHAR)Cresc_60_dia
+		from Traces.dbo.CheckList_Table_Growth 
+      ) as d order by CAST(Cresc_1_dia  AS NUMERIC(15,2)) desc 
+  FOR XML PATH( 'tr' ), Type ) AS VARCHAR(MAX) )   
+      
+    SET @CrescimentoTabelas_Table = REPLACE( replace( replace( @CrescimentoTabelas_Table, '&lt;', '<' ), '&gt;', '>' )    , '<td>', '<td align = center>')
+    
+  SET @CrescimentoTabelas_Table= '<table cellpadding="0" cellspacing="0" border="3" >'    
+              + '<tr>
+              <th width="170">Nome Database</th>
+              <th width="170">Nome Tabela</th>
+              <th width="120">Tamanho Atual (MB)</th>
+              <th width="120">Cresc. 1 Dia (MB)</th>
+              <th width="120">Cresc. 15 Dia (MB)</th>
+              <th width="120">Cresc. 30 Dia (MB)</th>
+              <th width="120">Cresc. 60 Dia (MB)</th>               
+				</tr>'    
+              + replace( replace( @CrescimentoTabelas_Table, '&lt;', '<' ), '&gt;', '>' )   
+              + '</table>' 
+
+                                                                     
+/**************************************************************
+			Backup  Header
+***************************************************************/
+
+DECLARE @Backup_Header VARCHAR(MAX)
+SET @Backup_Header='<font color=black bold=true size= 5>'
+SET @Backup_Header=@Backup_Header+'<BR /> Backup FULL e Diferencial das Bases' 
+SET @Backup_Header=@Backup_Header+'</font>'
+
+/**************************************************************
+			Backup - Informações
+***************************************************************/
+ 
+DECLARE @Backup_Table VARCHAR(MAX)    
+SET @Backup_Table= cast( (    
+SELECT td =  Database_name + 
+		'</td><td>'+  Backup_start_date + 
+		'</td><td>'+  Tempo_Min + 
+		'</td><td>'  + Recovery_model + 
+		'</td><td>'  + Tipo + 		
+		'</td><td>'  + Tamanho_MB+ 
+		'</td><td align = center>'                                     
+FROM (           
+	select Database_name, convert(varchar,Backup_start_date,120)Backup_start_date,cast(Tempo_Min as varchar) Tempo_Min,
+		cast(Recovery_model as varchar) Recovery_model,
+		case Type
+		WHEN 'D' THEN 'FULL'
+		WHEN 'I' THEN 'Diferencial'
+		WHEN 'L' THEN 'Log' END Tipo,cast(Tamanho_MB  as varchar) Tamanho_MB
+	from Traces.dbo.CheckList_Backups_Executados
+
+      ) as d order by Backup_start_date
+  FOR XML PATH( 'tr' ), Type ) AS VARCHAR(MAX) )   
+      
+    SET @Backup_Table = REPLACE( replace( replace( @Backup_Table, '&lt;', '<' ), '&gt;', '>' )    , '<td>', '<td align = center>')
+    
+  SET @Backup_Table= '<table cellpadding="0" cellspacing="0" border="3" >'    
+              + '<tr>
+              <th width="170">Nome Database</th>
+              <th width="170">Horário Execução</th>
+              <th width="120">Tempo (min)</th>
+              <th width="120">Recovery</th>
+              <th width="120">Tipo Backup</th>
+              <th width="120">Tamanho (MB)</th>             
+				</tr>'    
+              + replace( replace( @Backup_Table, '&lt;', '<' ), '&gt;', '>' )   
+              + '</table>' 
+
+/**************************************************************
+			Jobs que falharam -  Header
+***************************************************************/
+
+DECLARE @JobsFailed_Header VARCHAR(MAX)
+SET @JobsFailed_Header='<font color=black bold=true size= 5>'
+SET @JobsFailed_Header=@JobsFailed_Header+'<BR /> Jobs que Falharam' 
+SET @JobsFailed_Header=@JobsFailed_Header+'</font>'
+
+/**************************************************************
+			Jobs que falharam - Informações
+***************************************************************/
+ 
+DECLARE @JobsFailed_Table VARCHAR(MAX)    
+SET @JobsFailed_Table= cast( (    
+SELECT td =  Job_Name + 
+		'</td><td>'+  Status + 
+		'</td><td>'+  Dt_Execucao + 
+		'</td><td>'  + Run_Duration + 
+		'</td><td>'  + SQL_Message + 		
+		'</td><td align = center>'                                     
+FROM (           
+	
+	select Job_Name, Status, convert(varchar,Dt_Execucao,120) Dt_Execucao, Run_Duration, SQL_Message
+	from Traces.dbo.CheckList_Jobs_Failed 
+      ) as d order by Dt_Execucao
+  FOR XML PATH( 'tr' ), Type ) AS VARCHAR(MAX) )   
+      
+    SET @JobsFailed_Table = REPLACE( replace( replace( @JobsFailed_Table, '&lt;', '<' ), '&gt;', '>' )    , '<td>', '<td align = center>')
+    
+  SET @JobsFailed_Table= '<table cellpadding="0" cellspacing="0" border="3" >'    
+              + '<tr>
+              <th width="170">Nome Job</th>
+              <th width="60">Status</th>
+              <th width="120">Horário Execução</th>    
+              <th width="100">Duração (hh:mm:ss)</th>
+              <th width="320">Mensagem</th>        
+				</tr>'    
+              + replace( replace( @JobsFailed_Table, '&lt;', '<' ), '&gt;', '>' )   
+              + '</table>' 
+
+/**************************************************************
+			Jobs que falharam -  Header
+***************************************************************/
+
+DECLARE @JobsAlterados_Header VARCHAR(MAX)
+SET @JobsAlterados_Header='<font color=black bold=true size= 5>'
+SET @JobsAlterados_Header=@JobsAlterados_Header+'<BR /> Jobs Alterados' 
+SET @JobsAlterados_Header=@JobsAlterados_Header+'</font>'
+
+/**************************************************************
+			Jobs Alterados - Informações
+***************************************************************/
+ 
+DECLARE @JobsAlterados_Table VARCHAR(MAX)    
+SET @JobsAlterados_Table= cast( (    
+SELECT td =  Nm_Job + 
+		'</td><td>'+  Fl_Habilitado + 
+		'</td><td>'+  Dt_Criacao + 
+		'</td><td>'  + Dt_Modificacao + 
+		'</td><td>'  + Nr_Versao + 		
+		'</td><td align = center>'                                     
+FROM (           
+		
+	select Nm_Job, case Fl_Habilitado when 1 then 'SIM' when 0 then 'Não' end Fl_Habilitado, 
+		convert(varchar,Dt_Criacao,120) Dt_Criacao,
+		convert(varchar,Dt_Modificacao,120) Dt_Modificacao,
+		cast(Nr_Versao as varchar) Nr_Versao
+	from Traces.dbo.CheckList_Alteracao_Jobs
+		
+      ) as d order by Dt_Modificacao
+  FOR XML PATH( 'tr' ), Type ) AS VARCHAR(MAX) )   
+      
+    SET @JobsAlterados_Table = REPLACE( replace( replace( @JobsAlterados_Table, '&lt;', '<' ), '&gt;', '>' )    , '<td>', '<td align = center>')
+    
+  SET @JobsAlterados_Table= '<table cellpadding="0" cellspacing="0" border="3" >'    
+              + '<tr>
+              <th width="300">Nome Job</th>
+              <th width="60">Habilitado</th>
+              <th width="170">Data Criação</th>    
+              <th width="170">Data Alteração</th>
+              <th width="80">Núm. Versão</th>        
+				</tr>'    
+              + replace( replace( @JobsAlterados_Table, '&lt;', '<' ), '&gt;', '>' )   
+              + '</table>' 
+
+
+/**************************************************************
+			Tempo dos Jobs -  Header
+***************************************************************/
+
+DECLARE @TempoJobs_Header VARCHAR(MAX)
+SET @TempoJobs_Header='<font color=black bold=true size= 5>'
+SET @TempoJobs_Header=@TempoJobs_Header+'<BR /> Jobs Demorados' 
+SET @TempoJobs_Header=@TempoJobs_Header+'</font>'
+
+/**************************************************************
+			Tempo dos Jobs - Informações
+***************************************************************/
+ 
+DECLARE @TempoJobs_Table VARCHAR(MAX)    
+SET @TempoJobs_Table= cast( (    
+SELECT td =  Job_Name + 
+		'</td><td>'+  Status + 
+		'</td><td>'+  Dt_Execucao + 
+		'</td><td>'  + Run_Duration + 
+		'</td><td>'  + SQL_Message + 		
+		'</td><td align = center>'                                     
+FROM (           
+		
+	select Job_Name,Status,convert(varchar,Dt_Execucao,120) Dt_Execucao,Run_Duration,SQL_Message 
+	from Traces.dbo.CheckList_Job_Demorados
+		
+      ) as d order by Run_Duration desc
+  FOR XML PATH( 'tr' ), Type ) AS VARCHAR(MAX) )   
+      
+    SET @TempoJobs_Table = REPLACE( replace( replace( @TempoJobs_Table, '&lt;', '<' ), '&gt;', '>' )    , '<td>', '<td align = center>')
+    
+  SET @TempoJobs_Table= '<table cellpadding="0" cellspacing="0" border="3" >'    
+              + '<tr>
+              <th width="190">Nome Job</th>
+              <th width="79">Status</th>
+              <th width="120">Horário Execução</th>    
+              <th width="80">Duração</th>
+              <th width="320">Mensagem</th>        
+				</tr>'    
+              + replace( replace( @TempoJobs_Table, '&lt;', '<' ), '&gt;', '>' )   
+              + '</table>'
+
+
+
+
+/**************************************************************
+			Queries Demoradas -  Header
+***************************************************************/
+
+DECLARE @QueriesDemoradas_Header VARCHAR(MAX)
+SET @QueriesDemoradas_Header='<font color=black bold=true size= 5>'
+SET @QueriesDemoradas_Header=@QueriesDemoradas_Header+'<BR /> TOP 10 Queries Demoradas Dia Anterior (08:00 - 23:00)' 
+SET @QueriesDemoradas_Header=@QueriesDemoradas_Header+'</font>'
+
+/**************************************************************
+			Queries Demoradas - Informações
+***************************************************************/
+ 
+DECLARE @QueriesDemoradas_Table VARCHAR(MAX)    
+SET @QueriesDemoradas_Table= cast( (    
+SELECT td =  PrefixoQuery + 
+		'</td><td>'+  QTD + 
+		'</td><td>'+  Total + 
+		'</td><td>'  + Media + 
+		'</td><td>'  + Menor + 	
+		'</td><td>'  + Maior + 		
+		'</td><td>'  + Writes + 		
+		'</td><td>'  + CPU + 			
+		'</td><td align = center>'                                     
+FROM (           
+		
+	select PrefixoQuery,  cast(QTD AS varchar) QTD, 
+		cast(Total AS varchar) Total, 
+		cast(Media AS varchar) Media, cast(Menor AS varchar) Menor, 
+		cast(Maior AS varchar) Maior,  
+		cast(Writes as varchar) Writes,  cast(CPU AS varchar) CPU,Ordem
+	from Traces.dbo.CheckList_Traces_Queries
+	
+      ) as d order by Ordem,len(QTD) desc,QTD desc
+  FOR XML PATH( 'tr' ), Type ) AS VARCHAR(MAX) )   
+      
+    SET @QueriesDemoradas_Table = REPLACE( replace( replace( @QueriesDemoradas_Table, '&lt;', '<' ), '&gt;', '>' )    , '<td>', '<td align = center>')
+    
+  SET @QueriesDemoradas_Table= '<table cellpadding="0" cellspacing="0" border="3" >'    
+              + '<tr>
+              <th width="400">Prefixo Query (400 caracteres iniciais)</th>
+              <th width="40">Qtd</th>
+              <th width="60">Total (s)</th>    
+              <th width="60">Média (s)</th>
+              <th width="50">Menor (s)</th>       
+              <th width="50">Maior (s)</th>     
+              <th width="50">Writes</th> 
+              <th width="60">CPU</th> 
+				</tr>'    
+              + replace( replace( @QueriesDemoradas_Table, '&lt;', '<' ), '&gt;', '>' )   
+              + '</table>'
+
+
+
+
+
+/**************************************************************
+			Contadores -  Header
+***************************************************************/
+
+DECLARE @Contadores_Header VARCHAR(MAX)
+SET @Contadores_Header='<font color=black bold=true size= 5>'
+SET @Contadores_Header=@Contadores_Header+'<BR /> Média Contadores Dia Anterior (08:00 - 21:00)' 
+SET @Contadores_Header=@Contadores_Header+'</font>'
+
+/**************************************************************
+			Contadores - Informações
+***************************************************************/
+ 
+DECLARE @Contadores_Table VARCHAR(MAX)    
+
+SET @Contadores_Table= cast( (    
+SELECT td =  Hora + 	
+		'</td><td>'+  BatchRequests + 
+		'</td><td>'  + CPU + 
+		'</td><td>'  + [Page Life Expectancy]+ 	
+		'</td><td>'  + User_Connection + 			
+		'</td><td align = center>'                                     
+FROM (           
+		SELECT cast(U.Hora as varchar) Hora, cast(U.[BatchRequests] as varchar) [BatchRequests], cast(U.[CPU] as varchar) [CPU],
+			cast(U.[Page Life Expectancy] as varchar) [Page Life Expectancy],cast(U.[User_Connection] as varchar) [User_Connection]
+		FROM Traces.dbo.CheckList_Contadores AS C
+		PIVOT (
+			SUM(Media) 
+			FOR Nm_Contador IN ([BatchRequests],[CPU],[Page Life Expectancy],[User_Connection])
+			) AS U	
+			
+      ) as d order by len(Hora),Hora
+  FOR XML PATH( 'tr' ), Type ) AS VARCHAR(MAX) )   
+      
+    SET @Contadores_Table = REPLACE( replace( replace( @Contadores_Table, '&lt;', '<' ), '&gt;', '>' )    , '<td>', '<td align = center>')
+    
+  SET @Contadores_Table= '<table cellpadding="0" cellspacing="0" border="3" >'    
+              + '<tr>
+              <th width="50">Hora</th>
+              <th width="120">Batch Requests</th>
+              <th width="120">CPU</th>    
+              <th width="120">Page Life Expectancy</th>
+              <th width="120">Número de Conexões</th>      
+        
+				</tr>'    
+              + replace( replace( @Contadores_Table, '&lt;', '<' ), '&gt;', '>' )   
+              + '</table>'
+
+
+
+/**************************************************************
+			Fragmentação de índices -  Header
+***************************************************************/
+
+DECLARE @FragmentacaoIndice_Header VARCHAR(MAX)
+SET @FragmentacaoIndice_Header='<font color=black bold=true size= 5>'
+SET @FragmentacaoIndice_Header=@FragmentacaoIndice_Header+'<BR /> Fragmentação dos Índices' 
+SET @FragmentacaoIndice_Header=@FragmentacaoIndice_Header+'</font>'
+
+/**************************************************************
+			Fragmentação de índices - Informações
+***************************************************************/
+ 
+DECLARE @FragmentacaoIndice_Table VARCHAR(MAX)    
+
+SET @FragmentacaoIndice_Table= cast( (    
+SELECT td =  Dt_Referencia + 	
+		'</td><td>'+  Nm_Database + 
+		'</td><td>'  + Nm_Tabela + 
+		'</td><td>'  + Nm_Indice+ 	
+		'</td><td>'  + Avg_Fragmentation_In_Percent + 			
+		'</td><td>'  + Page_Count + 	
+		'</td><td>'  + Fill_Factor + 	
+		'</td><td>'  + Compressao + 	
+		'</td><td align = center>'                                     
+FROM (           
+
+	select top 15 convert(varchar,Dt_Referencia,120)Dt_Referencia, Nm_Database,Nm_Tabela,Nm_Indice,
+		cast(Avg_Fragmentation_In_Percent as varchar) Avg_Fragmentation_In_Percent,
+		cast(Page_Count as varchar) Page_Count,cast(Fill_Factor as varchar) Fill_Factor,
+		isnull(case Fl_Compressao when 0 then 'Sem Compressão'
+			 when 1 then 'Compressão de Linha' when 2 then 'Compressao de Página' end,'Sem Compressão') Compressao
+	from Traces.dbo.CheckList_Fragmentacao_Indices			
+      ) as d order by len(Avg_Fragmentation_In_Percent) desc,Avg_Fragmentation_In_Percent desc
+  FOR XML PATH( 'tr' ), Type ) AS VARCHAR(MAX) )   
+      
+    SET @FragmentacaoIndice_Table = REPLACE( replace( replace( @FragmentacaoIndice_Table, '&lt;', '<' ), '&gt;', '>' )    , '<td>', '<td align = center>')
+    
+  SET @FragmentacaoIndice_Table= '<table cellpadding="0" cellspacing="0" border="3" >'    
+              + '<tr>
+              <th width="50">Referencia</th>
+              <th width="150">Database</th>
+              <th width="150">Tabela</th>    
+              <th width="150">Indice</th>
+              <th width="120">Fragmentacao (%)</th>      
+              <th width="120">Qtd Páginas</th>   
+              <th width="60">Fill Factor (%)</th> 
+			  <th width="100">Compressão de Dados</th> 
+				</tr>'    
+              + replace( replace( @FragmentacaoIndice_Table, '&lt;', '<' ), '&gt;', '>' )   
+              + '</table>'
+
+
+/**************************************************************
+			Waits Stats -  Header
+***************************************************************/
+
+DECLARE @WaitsStats_Header VARCHAR(MAX)
+SET @WaitsStats_Header='<font color=black bold=true size= 5>'
+SET @WaitsStats_Header=@WaitsStats_Header+'<BR /> Waits Stats Dia Anterior (08:00 - 23:00)' 
+SET @WaitsStats_Header=@WaitsStats_Header+'</font>'
+
+/**************************************************************
+			Waits Stats - Informações
+***************************************************************/
+ 
+DECLARE @WaitsStats_Table VARCHAR(MAX)    
+
+SET @WaitsStats_Table= cast( (    
+SELECT td =  WaitType + 	
+		'</td><td>'  + Max_Log + 
+		'</td><td>'  + DIf_Wait_S+ 	
+		'</td><td>'  + DIf_Resource_S + 			
+		'</td><td>'  + DIf_Signal_S + 	
+		'</td><td>'  + DIf_WaitCount + 	
+		'</td><td>'  + Last_Percentage + 	
+	
+		'</td><td align = center>'                                     
+FROM (           
+	select WaitType, convert(varchar,Max_Log,120) Max_Log,
+			cast(DIf_Wait_S as varchar) DIf_Wait_S, cast(DIf_Resource_S as varchar) DIf_Resource_S,
+			cast(DIf_Signal_S as varchar) DIf_Signal_S,cast(DIf_WaitCount as varchar) DIf_WaitCount,
+			cast(Last_Percentage as varchar) Last_Percentage
+	from Traces.dbo.CheckList_Waits_Stats		
+      ) as d order by len(DIf_Wait_S) desc,DIf_Wait_S desc
+  FOR XML PATH( 'tr' ), Type ) AS VARCHAR(MAX) )   
+      
+    SET @WaitsStats_Table = REPLACE( replace( replace( @WaitsStats_Table, '&lt;', '<' ), '&gt;', '>' )    , '<td>', '<td align = center>')
+    
+  SET @WaitsStats_Table= '<table cellpadding="0" cellspacing="0" border="3" >'    
+              + '<tr>
+              <th width="210">WaitType</th>
+         
+              <th width="150">Data Log</th>    
+              <th width="80">Wait (s)</th>
+              <th width="80">Resource (s)</th>      
+              <th width="80">Signal (s)</th>   
+              <th width="80">Qtd Wait</th> 	
+              <th width="70">Last (%)</th> 			
+				</tr>'    
+              + replace( replace( @WaitsStats_Table, '&lt;', '<' ), '&gt;', '>' )   
+              + '</table>'
+              
+
+
+/**************************************************************
+			Log SQL -  Header
+***************************************************************/
+
+DECLARE @LogSQL_Header VARCHAR(MAX)
+SET @LogSQL_Header='<font color=black bold=true size= 5>'
+SET @LogSQL_Header=@LogSQL_Header+'<BR /> Error Log do SQL Server' 
+SET @LogSQL_Header=@LogSQL_Header+'</font>'
+
+/**************************************************************
+			Log SQL - Informações
+***************************************************************/
+ 
+DECLARE @LogSQL_Table VARCHAR(MAX)    
+
+SET @LogSQL_Table= cast( (    
+SELECT td =  Dt_Log + 	
+		'</td><td>'  + ProcessInfo + 
+		'</td><td>'  + Text+ 	
+		'</td><td align = center>'                                     
+FROM (           
+
+	select convert(varchar,Dt_Log,120) Dt_Log, ProcessInfo,Text 
+	from Traces.dbo.CheckList_SQLServer_ErrorLog 
+
+      ) as d order by Dt_Log
+  FOR XML PATH( 'tr' ), Type ) AS VARCHAR(MAX) )   
+      
+    SET @LogSQL_Table = REPLACE( replace( replace( @LogSQL_Table, '&lt;', '<' ), '&gt;', '>' )    , '<td>', '<td align = center>')
+    
+  SET @LogSQL_Table= '<table cellpadding="0" cellspacing="0" border="3" >'    
+              + '<tr>
+              <th width="120">Data Log</th>
+              <th width="80"> Processo</th>
+              <th width="600">Mensagem</th>              
+				</tr>'    
+              + replace( replace( @LogSQL_Table, '&lt;', '<' ), '&gt;', '>' )   
+              + '</table>'
+              
+
+/**************************************************************
+			Empty Section for giving space between table and headings
+***************************************************************/
+
+DECLARE @emptybody2 VARCHAR(MAX)  
+SET @emptybody2=''  
+SET @emptybody2 = '<table cellpadding="5" cellspacing="5" border="0">'    
+              + 
+              '<tr>
+              <th width="500">               </th>
+              </tr>'    
+              + REPLACE( REPLACE( isnull(@emptybody2,''), '&lt;', '<' ), '&gt;', '>' )   
+              + '</table>'    
+
+
+/**************************************************************
+			Sending Email
+***************************************************************/
+              
+DECLARE @subject AS VARCHAR(500)    
+DECLARE @importance as varchar(6)    
+DECLARE @EmailBody VARCHAR(MAX)
+SET @importance ='High'     
+DECLARE @recipientsList varchar(8000)
+
+SET @subject = 'CheckList Diário do Banco de Dados - Cartorio3Zona'   
+
+SELECT @EmailBody =
+	  @EspacoDiscoHeader + @emptybody2 + @EspacoDiscoTable+@emptybody2 -- espaço em disco
+	+ @ArquivosMDFLDF_Header + @emptybody2 + @ArquivosMDFLDF_Table + @emptybody2 -- MDF e LDF
+	+ @CrescimentoBases_Header + @emptybody2+ @CrescimentoBases_Table + @emptybody2 -- Crescimento Bases
+	+ @CrescimentoTabelas_Header + @emptybody2+ @CrescimentoTabelas_Table + @emptybody2 -- Crescimento Tabelas
+	+ @Backup_Header + @emptybody2+ @Backup_Table + @emptybody2 -- Backup
+	+ @JobsFailed_Header + @emptybody2+ @JobsFailed_Table + @emptybody2 -- JobsFailed
+	+ @JobsAlterados_Header + @emptybody2+ @JobsAlterados_Table + @emptybody2 -- Jobs Alterados
+	+ @TempoJobs_Header + @emptybody2+ @TempoJobs_Table + @emptybody2 -- Tempo Jobs
+	+ @QueriesDemoradas_Header + @emptybody2+ @QueriesDemoradas_Table + @emptybody2 -- Queries Demoradas
+	+ @Contadores_Header + @emptybody2+ @Contadores_Table + @emptybody2 -- Contadores
+	+ @FragmentacaoIndice_Header + @emptybody2+ @FragmentacaoIndice_Table + @emptybody2 --FragmentacaoIndice
+	+ @WaitsStats_Header + @emptybody2+ @WaitsStats_Table  + @emptybody2 -- WaitsStats
+	+ @LogSQL_Header + @emptybody2+ @LogSQL_Table + @emptybody2 -- LogSQL
+
+/*	 -- para debug da rotina
+select  @EmailBody, @EspacoDiscoHeader , @emptybody2 , @EspacoDiscoTable,@emptybody2 disco-- espaço em disco
+, @ArquivosMDFLDF_Header , @emptybody2 , @ArquivosMDFLDF_Table , @emptybody2 MDF-- MDF e LDF
+, @CrescimentoBases_Header , @emptybody2, @CrescimentoBases_Table , @emptybody2 Bases-- Crescimento Bases
+, @CrescimentoTabelas_Header , @emptybody2 rrr, @CrescimentoTabelas_Table , @emptybody2 Tabelas-- Crescimento Tabelas
+, @Backup_Header , @emptybody2, @Backup_Table , @emptybody2 [backup] -- Backup
+, @JobsFailed_Header , @emptybody2, @JobsFailed_Table , @emptybody2 JobsFailed-- JobsFailed
+, @JobsAlterados_Header , @emptybody2, @JobsAlterados_Table , @emptybody2 Alterados-- Jobs Alterados
+, @TempoJobs_Header , @emptybody2, @TempoJobs_Table , @emptybody2 Tempo-- Tempo Jobs
+, @QueriesDemoradas_Header , @emptybody2, @QueriesDemoradas_Table , @emptybody2 Queries-- Queries Demoradas
+, @Contadores_Header , @emptybody2, @Contadores_Table , @emptybody2 Contadores-- Contadores
+, @FragmentacaoIndice_Header , @emptybody2, @FragmentacaoIndice_Table , @emptybody2 FragmentacaoIndice--FragmentacaoIndice
+, @WaitsStats_Header , @emptybody2, @WaitsStats_Table  , @emptybody2 WaitsStats-- WaitsStats
+, @LogSQL_Header , @emptybody2, @LogSQL_Table , @emptybody2 
+*/
+
+	 EXEC msdb.dbo.sp_send_dbmail    
+	@profile_name = 'MSSQLServer',
+		@recipients = 'fabricioflima@gmail.com', 
+	 @subject = @subject ,    
+	 @body = @EmailBody ,    
+	 @body_format = 'HTML' ,    
+	 @importance=@importance    

@@ -1,0 +1,46 @@
+-- 1) EXECUTAR O SCRIPT ABAIXO NOS DOIS SERVIDORES 
+-- 2) COPIAR O RESULTADO EM UM EXCEL E COMPARAR
+
+select name, value_in_use
+from sys.configurations
+where name in(
+	'Ad Hoc Distributed Queries',
+	'Agent XPs',
+	'allow updates',
+	'backup compression default',
+	'clr enabled',
+	'cost threshold for parallelism',
+	'Database Mail XPs',
+	'default language',
+	'default trace enabled',
+	'fill factor (%)',
+	'max degree of parallelism',
+	'max server memory (MB)',
+	'max worker threads',
+	'min memory per query (KB)',
+	'min server memory (MB)',
+	'nested triggers',
+	'Ole Automation Procedures',
+	'optimize for ad hoc workloads',
+	'remote admin connections',
+	'Replication XPs',
+	'user connections',
+	'xp_cmdshell'
+)
+order by name, value_in_use
+
+/*
+GO
+
+EXEC [sp_configure] 'show advanced option', 1
+
+RECONFIGURE with OVERRIDE
+
+EXEC [sp_configure] 'Ole Automation Procedures', 1
+
+RECONFIGURE with OVERRIDE
+ 
+EXEC [sp_configure] 'show advanced option', 0
+
+RECONFIGURE with OVERRIDE
+*/

@@ -1,0 +1,903 @@
+
+
+use Traces
+GO
+
+if OBJECT_ID('CheckList_Espaco_Disco') is not null
+	drop table CheckList_Espaco_Disco
+GO
+
+
+CREATE TABLE [dbo].CheckList_Espaco_Disco(
+	[DriveName] [varchar](256) NULL,
+	[TotalSize_GB] [bigint] NULL,
+	[FreeSpace_GB] [bigint] NULL,
+	[SpaceUsed_GB] [bigint] NULL,
+	[SpaceUsed_Percent] [decimal](9, 3) NULL
+) ON [PRIMARY]
+
+
+if OBJECT_ID('CheckList_Arquivos_MDF_LDF') is not null
+	drop table CheckList_Arquivos_MDF_LDF
+
+		create table CheckList_Arquivos_MDF_LDF(
+			[Server] varchar(20),
+			Nm_Database varchar(100),
+			Logical_Name varchar(100),
+			FileName varchar(200),
+			Total_Reservado numeric(15,2),
+			Total_Utilizado numeric(15,2),
+			[Espaco_Livre (MB)] numeric(15,2), 
+			[Espaco_Livre (%)] numeric(15,2), 
+			MaxSize int,
+			Growth varchar(25),
+			NextSize numeric(15,2),
+			Fl_Situacao char(1)
+
+)
+
+if OBJECT_ID('CheckList_Database_Growth') is not null
+	drop table CheckList_Database_Growth
+	
+	CREATE TABLE CheckList_Database_Growth(
+			[Nm_Servidor] [varchar](50) NOT NULL,
+			[Nm_database] [varchar](100) NULL,
+			[Tamanho_Atual] [numeric](38, 2) NULL,
+			[Cresc_1_dia] [numeric](38, 2) NULL,
+			[Cresc_15_dia] [numeric](38, 2) NULL,
+			[Cresc_30_dia] [numeric](38, 2) NULL,
+			[Cresc_60_dia] [numeric](38, 2) NULL
+)
+
+if OBJECT_ID('CheckList_Table_Growth') is not null
+	drop table CheckList_Table_Growth
+	
+	CREATE TABLE CheckList_Table_Growth(
+			[Nm_Servidor] [varchar](50) NOT NULL,
+			Nm_Database varchar(50) null,
+			[Nm_Tabela] [varchar](100) NULL,
+			[Tamanho_Atual] [numeric](38, 2) NULL,
+			[Cresc_1_dia] [numeric](38, 2) NULL,
+			[Cresc_15_dia] [numeric](38, 2) NULL,
+			[Cresc_30_dia] [numeric](38, 2) NULL,
+			[Cresc_60_dia] [numeric](38, 2) NULL
+
+)
+
+	if OBJECT_ID('CheckList_Backups_Executados') is not null
+	drop table CheckList_Backups_Executados
+	
+	CREATE TABLE [dbo].[CheckList_Backups_Executados](
+	[Database_name] [varchar](128) NULL,
+	[Name] [varchar](128) NULL,
+	[Backup_start_date] [datetime] NULL,
+	[Tempo_Min] [int] NULL,
+	[Position] [int] NULL,
+	[Server_name] [varchar](128) NULL,
+	[Recovery_model] [varchar](60) NULL,
+	[Logical_device_name] [varchar](128) NOT NULL,
+	[Device_type] [tinyint] NULL,
+	[Type] [char](1) NULL,
+	[Tamanho_MB] [numeric](15, 2) NULL
+) ON [PRIMARY]
+
+if OBJECT_ID('CheckList_Jobs_Failed') is not null
+	drop table CheckList_Jobs_Failed
+	
+	create table CheckList_Jobs_Failed(
+		  [Server] varchar(50),
+		  [Job_Name] varchar(255),
+		  [Status] varchar(25),
+		  [Dt_Execucao] varchar(20),
+		  [Run_Duration] varchar(8),
+		  [SQL_Message] varchar(4490)
+)
+GO
+if OBJECT_ID('CheckList_Alteracao_Jobs') is not null
+	drop table CheckList_Alteracao_Jobs
+GO	
+	create table CheckList_Alteracao_Jobs(
+	Nm_Job varchar(1000),
+	Fl_Habilitado tinyint,
+	Dt_Criacao datetime,
+	Dt_Modificacao datetime,
+	Nr_Versao smallint)
+
+
+if OBJECT_ID('CheckList_Job_Demorados') is not null
+	drop table CheckList_Job_Demorados
+
+CREATE TABLE [dbo].[CheckList_Job_Demorados](
+	[Job_Name] [varchar](255) NULL,
+	[Status] [varchar](19) NULL,
+	[Dt_Execucao] [varchar](30) NULL,
+	[Run_Duration] [varchar](8) NULL,
+	[SQL_Message] [varchar](3990) NULL) 
+
+	
+if OBJECT_ID('CheckList_Traces_Queries') is not null
+	drop table CheckList_Traces_Queries
+	
+create table CheckList_Traces_Queries(
+	PrefixoQuery varchar(400),
+	QTD int,
+	Total numeric(15,2),
+	Media numeric(15,2),
+	Menor numeric(15,2),
+	Maior numeric(15,2),
+	Writes int,
+	CPU int)
+alter table CheckList_Traces_Queries
+add Ordem tinyint
+
+if OBJECT_ID('CheckList_Contadores') is not null
+	drop table CheckList_Contadores
+	
+CREATE TABLE CheckList_Contadores(
+	Hora TINYINT,
+	Nm_Contador VARCHAR(60),
+	Media INT)
+
+if OBJECT_ID('CheckList_Fragmentacao_Indices') is not null
+	drop table CheckList_Fragmentacao_Indices
+	
+CREATE TABLE [dbo].[CheckList_Fragmentacao_Indices](
+	[Dt_Referencia] [datetime] NULL,
+	[Nm_Servidor] [varchar](100) NULL,
+	[Nm_Database] [varchar](1000) NULL,
+	[Nm_Tabela] [varchar](1000) NULL,
+	[Nm_Indice] [varchar](1000) NULL,
+	[Avg_Fragmentation_In_Percent] [numeric](5, 2) NULL,
+	[Page_Count] [int] NULL,
+	[Fill_Factor] [tinyint] NULL,
+	[Fl_Compressao] [tinyint] NULL
+) ON [PRIMARY]
+
+
+if OBJECT_ID('CheckList_SQLServer_ErrorLog') is not null
+	drop table CheckList_SQLServer_ErrorLog
+	
+		create table CheckList_SQLServer_ErrorLog(
+		Dt_Log datetime,
+		ProcessInfo varchar(100),
+		Text varchar(max))
+
+	
+if OBJECT_ID('CheckList_Waits_Stats') is not null
+	drop table CheckList_Waits_Stats
+	
+CREATE TABLE [dbo].[CheckList_Waits_Stats](
+[WaitType] varchar(100)  ,
+Min_Log [datetime] ,
+Max_Log [datetime],
+DIf_Wait_S [decimal](14, 2) ,
+DIf_Resource_S [decimal](14, 2) ,
+DIf_Signal_S [decimal](14, 2) ,
+DIf_WaitCount [bigint]  ,
+DIf_Percentage [decimal](4, 2) ,
+Last_Percentage [decimal](4, 2)
+) 
+
+GO
+
+if OBJECT_ID('stpCheckList_Espaco_Disco') is not null
+	drop procedure stpCheckList_Espaco_Disco
+	GO
+-- drop procedure stpCheckList_Espaco_Disco
+CREATE procedure stpCheckList_Espaco_Disco
+as
+SET NOCOUNT ON 
+
+CREATE TABLE #dbspace (
+name sysname,
+caminho varchar(200),
+tamanho varchar(10),
+drive Varchar(30))
+
+CREATE TABLE [#espacodisco] (
+Drive varchar (10) ,
+[Tamanho (MB)] Int,
+[Usado (MB)] Int,
+[Livre (MB)] Int,
+[Livre (%)] int,
+[Usado (%)] int,
+[Ocupado SQL (MB)] Int, 
+[Data] smalldatetime)
+
+Exec sp_MSforeachdb 'Use [?] Insert into #dbspace Select Convert(Varchar(25),DB_Name())''Database'',Convert(Varchar(60),FileName),Convert(Varchar(8),Size/128)''Size in MB'',Convert(Varchar(30),Name) from sysfiles'
+
+DECLARE @hr int,@fso int,@mbtotal int,
+@TotalSpace int,@MBFree int,
+@Percentage int,@SQLDriveSize int,
+@size float
+DECLARE @drive Varchar(1),@fso_Method varchar(255)
+
+SET @mbtotal = 0 SET @mbtotal = 0
+EXEC @hr = master.dbo.sp_OACreate 'Scripting.FilesystemObject', @fso OUTPUT
+
+if OBJECT_ID('tempdb..#space') is not null drop table #space
+
+CREATE TABLE #space (drive char(1), mbfree int)
+INSERT INTO #space EXEC master.dbo.xp_fixeddrives
+Declare CheckDrives Cursor For Select drive,mbfree From #space
+Open CheckDrives
+Fetch Next from CheckDrives into @drive,@MBFree
+WHILE(@@FETCH_STATUS=0)
+BEGIN
+SET @fso_Method = 'Drives("' + @drive + ':").TotalSize'
+SELECT @SQLDriveSize=sum(Convert(Int,tamanho)) from #dbspace where Substring(caminho,1,1)=@drive
+EXEC @hr = sp_OAMethod @fso, @fso_Method, @size OUTPUT
+SET @mbtotal =  @size / (1024 * 1024)
+INSERT INTO #espacodisco VALUES(@drive+':',@mbtotal,@mbtotal-@MBFree,@MBFree,
+(100 * round(@MBFree,2) / round(@mbtotal,2)),
+(100 - 100 * round(@MBFree,2) / round(@mbtotal,2)),@SQLDriveSize, getdate())
+
+FETCH NEXT FROM CheckDrives INTO @drive,@MBFree
+END
+CLOSE CheckDrives
+DEALLOCATE CheckDrives
+
+
+--IF (OBJECT_ID('CheckList_Espaco_Disco') IS NOT NULL)  DROP TABLE CheckList_Espaco_Disco 
+
+DELETE FROM CheckList_Espaco_Disco
+
+--SELECT Drive, [Tamanho (MB)],[Usado (MB)] , [Livre (MB)] , [Livre (%)],[Usado (%)] , ISNULL ([Ocupado SQL (MB)],0) AS [Ocupado SQL (MB)] 
+--into CheckList_Espaco_Disco FROM #espacodisco
+
+INSERT INTO CheckList_Espaco_Disco(DriveName,TotalSize_GB,FreeSpace_GB,SpaceUsed_GB,SpaceUsed_Percent)
+SELECT Drive,[Tamanho (MB)],[Livre (MB)],[Usado (MB)],[Usado (%)] 
+FROM #espacodisco
+
+
+DROP TABLE #dbspace
+DROP TABLE #space
+DROP TABLE #espacodisco
+
+
+GO
+if OBJECT_ID('stpCheckList_Arquivos_MDF_LDF') is not null
+	drop procedure stpCheckList_Arquivos_MDF_LDF
+GO
+USE [TRACES]
+GO
+/****** Object:  StoredProcedure [dbo].[stpCheckList_Arquivos_MDF_LDF]    Script Date: 18/12/2015 09:24:27 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE procedure [dbo].[stpCheckList_Arquivos_MDF_LDF]
+as
+	-- COLETA DE INFORMAÇÕES SOBRE ARQUIVOS MDF
+	if OBJECT_ID('tempdb..##MDFs_Sizes') is not null drop table ##MDFs_Sizes
+
+	create table ##MDFs_Sizes(
+		[Server] varchar(50),
+		Nm_Database varchar(100),
+		NomeLogico varchar(100),
+		Total_Utilizado numeric(15,2),
+		[Espaco_Livre (MB)] numeric(15,2),
+		physical_name varchar(4000)
+		)
+
+		/*
+	exec sp_MSforeachdb '
+		Use [?]
+
+			;WITH Cte
+			AS(
+				select physical_name,
+				cast(((SUM(size)*8.0)/1024.0) as numeric(15,2)) Total_Reservado
+				, (case when type = 0 
+							then cast((select (SUM(ps.reserved_page_count)*8.0)/1024.0 
+										from sys.dm_db_partition_stats ps with(nolock)) as numeric(15,2))
+					end) Total_Utilizado
+				from sys.database_files with(nolock)
+				where type = 0 --or type = 1
+				group by type, name, physical_name, growth, is_percent_growth
+			)
+				insert into ##MDFs_Sizes
+				select @@servername
+						, db_name()
+						, m.Total_Utilizado as [Total_Utilizado (MB)]
+						, (m.Total_Reservado - m.Total_Utilizado) as [Espaco_Livre (MB)]
+						, m.physical_name
+				from Cte m
+	
+	'*/
+		
+	exec sp_MSforeachdb '
+		Use [?]
+		insert into ##MDFs_Sizes
+		SELECT
+		@@servername,
+		db_name() NomeBase,
+		Name NomeLogico,
+		CONVERT (Decimal(15,2),ROUND(FILEPROPERTY(a.Name,''SpaceUsed'')/128.000,2))AS [Total_Utilizado (MB)], 
+		CONVERT (Decimal(15,2),ROUND((a.Size-FILEPROPERTY(a.Name,''SpaceUsed''))/128.000,2))AS [Available Space (MB)],
+		[Filename]  physical_name
+		FROM dbo.sysfiles a (NOLOCK)
+		JOIN sysfilegroups b (NOLOCK) ON a.groupid = b.groupid
+		ORDER BY b.groupname'
+			
+		--	select * from ##MDFs_Sizes
+	-- COLETA DE INFORMAÇÕES SOBRE ARQUIVOS LDF
+	if OBJECT_ID('tempdb..#Logs_Sizes') is not null drop table #Logs_Sizes
+	
+	CREATE TABLE #Logs_Sizes(
+		[Server] varchar(50),
+		[Nm_Database] [varchar](100) NOT NULL,
+		[Log_Size(KB)] [bigint] NOT NULL,
+		[Log_Used(KB)] [bigint] NOT NULL,
+		[Log_Used(%)] [decimal](22, 2) NULL
+	) 
+
+		insert into #Logs_Sizes(Server,Nm_Database,[Log_Size(KB)],[Log_Used(KB)],[Log_Used(%)])
+		SELECT @@SERVERNAME,
+				db.[name] AS [Database Name] ,
+				ls.cntr_value AS [Log Size (KB)] ,
+				lu.cntr_value AS [Log Used (KB)] ,
+				CAST(CAST(lu.cntr_value AS FLOAT) / case when CAST(ls.cntr_value AS FLOAT) = 0  
+															then 1  
+															else CAST(ls.cntr_value AS FLOAT) 
+													end
+				AS DECIMAL(18,2)) * 100 AS [Log Used %]
+		FROM sys.databases AS db with(nolock)
+				INNER JOIN sys.dm_os_performance_counters AS lu with(nolock) ON db.name = lu.instance_name
+				INNER JOIN sys.dm_os_performance_counters AS ls with(nolock) ON db.name = ls.instance_name
+		WHERE lu.counter_name LIKE 'Log File(s) Used Size (KB)%'
+				AND ls.counter_name LIKE 'Log File(s) Size (KB)%' 
+		
+
+	
+	truncate table CheckList_Arquivos_MDF_LDF
+	
+	insert into Traces.dbo.CheckList_Arquivos_MDF_LDF ([Server],Nm_Database,Logical_Name,FileName,Total_Reservado,Total_Utilizado,[Espaco_Livre (MB)],
+											[Espaco_Livre (%)],MaxSize,Growth,NextSize,Fl_Situacao)
+	select	distinct @@SERVERNAME
+			, db_name(A.database_id) as Nm_Database
+			, name as Logical_Name 
+			, A.physical_name [Filename]
+			, case when A.name = 'tempdev' then ([Espaco_Livre (MB)]+[Total_Utilizado]) else (Size/1024.0) * 8 end [Size(MB)]
+			, case when right(A.physical_name,3) = 'mdf' or  right(A.physical_name,3) = 'ndf'  then B.Total_Utilizado else (C.[Log_Used(KB)])/1024.0 end as [Used(MB)]
+			, case when right(A.physical_name,3) = 'mdf' or  right(A.physical_name,3) = 'ndf' 
+						then [Espaco_Livre (MB)]
+						else ([Log_Size(KB)] - [Log_Used(KB)])/1024.0
+				end as [Free_Space(MB)]
+			, case	when A.name = 'tempdev'
+						then ([Espaco_Livre (MB)]/([Espaco_Livre (MB)]+[Total_Utilizado]))*100.00
+					when right(A.physical_name,3) = 'mdf' or  right(A.physical_name,3) = 'ndf' 
+						then (([Espaco_Livre (MB)]/((Size/1024.0) * 8.0)))*100.0
+						else (100.00 - C.[Log_Used(%)])
+				end as [Free_Space(%)]
+			, case when A.Max_Size = -1 then -1 else (A.Max_Size/1024) * 8 end [MaxSize(MB)]
+			, case when is_percent_growth = 1 
+						then cast(A.Growth as varchar) + ' %'
+						else cast (cast((A.Growth * 8 )/1024.00 as numeric(15,2)) as varchar) + ' MB'
+					end Growth
+			, case when is_percent_growth = 1
+						then ((Size/1024) * 8) * ((A.Growth/100.00) + 1)
+						else ((Size/1024) * 8) + cast((A.Growth * 8 )/1024.00 as numeric(15,2)) 
+					end Proximo_Tamanho
+			, case when A.Max_Size = -1 then '1'  -- OK
+						when( case when is_percent_growth = 1
+										then ((Size/1024) * 8) * ((A.Growth/100.00) + 1)
+										else ((Size/1024) * 8) + cast((A.Growth * 8 )/1024.00 as numeric(15,2)) 
+									end )  <  (A.Max_Size/1024*8 ) *.95 then  '1' else '0'
+					end Fl_Situacao
+	from sys.master_files A with(nolock) 
+	join ##MDFs_Sizes B on A.physical_name = B.physical_name
+		join #Logs_Sizes C on C.Nm_Database = db_name(A.database_id)
+	where A.type_desc <> 'FULLTEXT'
+	order by [Free_Space(%)]
+
+
+
+
+
+
+GO
+if OBJECT_ID('stpCheckList_Database_Growth') is not null
+	drop procedure stpCheckList_Database_Growth
+GO
+CREATE procedure [dbo].[stpCheckList_Database_Growth]
+as
+
+	
+	-- Tamanho atual das DATABASES de todos os servidores e crescimento em 1, 15, 30 e 60 dias.
+	if OBJECT_ID('tempdb..#CheckList_Database_Growth') is not null drop table #CheckList_Database_Growth
+	
+	CREATE TABLE #CheckList_Database_Growth(
+			[Nm_Servidor] [varchar](50) NOT NULL,
+			[Nm_Database] [varchar](100) NULL,
+			[Tamanho_Atual] [numeric](38, 2) NULL,
+			[Cresc_1_dia] [numeric](38, 2) NULL,
+			[Cresc_15_dia] [numeric](38, 2) NULL,
+			[Cresc_30_dia] [numeric](38, 2) NULL,
+			[Cresc_60_dia] [numeric](38, 2) NULL
+		)
+		
+	insert into #CheckList_Database_Growth
+	SELECT B.Nm_Servidor, Nm_Database, 
+		  SUM(CASE WHEN Dt_Referencia = CONVERT(VARCHAR, GETDATE() ,112) THEN A.Nr_Tamanho_Total ELSE 0 END) Tamanho_Atual,
+			  SUM(CASE WHEN Dt_Referencia = CONVERT(VARCHAR, GETDATE()-1 ,112) THEN A.Nr_Tamanho_Total ELSE 0 END) Cresc_1_dia,
+		  SUM(CASE WHEN Dt_Referencia = CONVERT(VARCHAR, GETDATE()-15 ,112) THEN A.Nr_Tamanho_Total ELSE 0 END) Cresc_15_dia,
+		   SUM(CASE WHEN Dt_Referencia = CONVERT(VARCHAR, GETDATE()-30 ,112) THEN A.Nr_Tamanho_Total ELSE 0 END) Cresc_30_dia,
+			  SUM(CASE WHEN Dt_Referencia = CONVERT(VARCHAR, GETDATE()-60 ,112) THEN A.Nr_Tamanho_Total ELSE 0 END) Cresc_60_dia          
+	FROM Traces.dbo.Historico_Tamanho_Tabela A
+		  JOIN Traces.dbo.Servidor B ON A.Id_Servidor = B.Id_Servidor 
+		  JOIN Traces.dbo.Tabela C ON A.Id_Tabela = C.Id_Tabela
+		  JOIN Traces.dbo.BaseDados D ON A.Id_BaseDados = D.Id_BaseDados 
+	WHERE A.Dt_Referencia IN (CONVERT(VARCHAR,GETDATE(),112), CONVERT(VARCHAR,GETDATE()-1,112), CONVERT(VARCHAR,GETDATE()-15,112), CONVERT								(VARCHAR, GETDATE()-30 ,112), CONVERT(VARCHAR, GETDATE()-60 ,112) ) --Hoje, 1 dia, 15 dias, 30 dias, 60 dias
+	and B.Nm_Servidor = @@servername --tratar caso quando o servidor muda de nome
+	GROUP BY B.Nm_Servidor,Nm_Database
+	ORDER BY Cresc_1_dia desc
+			,Tamanho_Atual desc
+			
+	truncate table CheckList_Database_Growth
+		
+	insert into CheckList_Database_Growth ( Nm_Servidor, Nm_Database, Tamanho_Atual, Cresc_1_dia, Cresc_15_dia, Cresc_30_dia, Cresc_60_dia )
+	select Nm_Servidor, Nm_Database ,	Tamanho_Atual, 
+		Tamanho_Atual - (case when Cresc_1_dia = 0 then Tamanho_Atual else Cresc_1_dia end) Cresc_1_dia,
+		Tamanho_Atual - (case when Cresc_15_dia = 0 then Tamanho_Atual else Cresc_15_dia end) Cresc_15_dia,
+		Tamanho_Atual - (case when Cresc_30_dia = 0 then Tamanho_Atual else Cresc_30_dia end) Cresc_30_dia,
+		Tamanho_Atual - (case when Cresc_60_dia = 0 then Tamanho_Atual else Cresc_60_dia end) Cresc_60_dia	
+	from #CheckList_Database_Growth
+
+GO
+
+if OBJECT_ID('stpCheckList_Table_Growth') is not null
+	drop procedure stpCheckList_Table_Growth
+	
+GO
+
+CREATE procedure [dbo].[stpCheckList_Table_Growth]
+as
+	
+	-- Tamanho atual das DATABASES de todos os servidores e crescimento em 1, 15, 30 e 60 dias.
+	if OBJECT_ID('tempdb..#CheckList_Table_Growth') is not null drop table #CheckList_Table_Growth
+	
+	CREATE TABLE #CheckList_Table_Growth(
+			[Nm_Servidor] [varchar](50) NOT NULL,
+			Nm_Database varchar(50) null,
+			[Nm_Tabela] [varchar](100) NULL,
+			[Tamanho_Atual] [numeric](38, 2) NULL,
+			[Cresc_1_dia] [numeric](38, 2) NULL,
+			[Cresc_15_dia] [numeric](38, 2) NULL,
+			[Cresc_30_dia] [numeric](38, 2) NULL,
+			[Cresc_60_dia] [numeric](38, 2) NULL		)
+		
+	insert into #CheckList_Table_Growth
+	SELECT B.Nm_Servidor, Nm_Database,Nm_Tabela, 
+		  SUM(CASE WHEN Dt_Referencia = CONVERT(VARCHAR, GETDATE() ,112) THEN A.Nr_Tamanho_Total ELSE 0 END) Tamanho_Atual,
+			  SUM(CASE WHEN Dt_Referencia = CONVERT(VARCHAR, GETDATE()-1 ,112) THEN A.Nr_Tamanho_Total ELSE 0 END) Cresc_1_dia,
+		  SUM(CASE WHEN Dt_Referencia = CONVERT(VARCHAR, GETDATE()-15 ,112) THEN A.Nr_Tamanho_Total ELSE 0 END) Cresc_15_dia,
+		   SUM(CASE WHEN Dt_Referencia = CONVERT(VARCHAR, GETDATE()-30 ,112) THEN A.Nr_Tamanho_Total ELSE 0 END) Cresc_30_dia,
+			  SUM(CASE WHEN Dt_Referencia = CONVERT(VARCHAR, GETDATE()-60 ,112) THEN A.Nr_Tamanho_Total ELSE 0 END) Cresc_60_dia          
+	FROM Traces.dbo.Historico_Tamanho_Tabela A
+		  JOIN Traces.dbo.Servidor B ON A.Id_Servidor = B.Id_Servidor 
+		  JOIN Traces.dbo.Tabela C ON A.Id_Tabela = C.Id_Tabela
+		  JOIN Traces.dbo.BaseDados D ON A.Id_BaseDados = D.Id_BaseDados 
+	WHERE A.Dt_Referencia IN (CONVERT(VARCHAR,GETDATE(),112), CONVERT(VARCHAR,GETDATE()-1,112), CONVERT(VARCHAR,GETDATE()-15,112), CONVERT								(VARCHAR, GETDATE()-30 ,112), CONVERT(VARCHAR, GETDATE()-60 ,112) ) --Hoje, 1 dia, 15 dias, 30 dias, 60 dias
+	GROUP BY B.Nm_Servidor, Nm_Database,Nm_Tabela
+	ORDER BY Cresc_1_dia desc
+			,Tamanho_Atual desc
+			
+	truncate table CheckList_Table_Growth
+		
+	
+	declare @Databases table(Nm_Database varchar(50))
+	declare @Nm_Database varchar(50)
+	
+	insert into @Databases
+	select distinct Nm_Database from #CheckList_Table_Growth		
+	order by Nm_Database
+	
+	while exists (select null from @Databases)
+	begin
+	
+		select @Nm_Database = Nm_Database from @Databases
+		
+		insert into CheckList_Table_Growth ( Nm_Servidor, Nm_Database,Nm_Tabela, Tamanho_Atual, Cresc_1_dia, Cresc_15_dia, Cresc_30_dia, Cresc_60_dia )
+		select top 10 Nm_Servidor,Nm_Database, Nm_Tabela ,	Tamanho_Atual, 
+			Tamanho_Atual - (case when Cresc_1_dia = 0 then Tamanho_Atual else Cresc_1_dia end) Cresc_1_dia,
+			Tamanho_Atual - (case when Cresc_15_dia = 0 then Tamanho_Atual else Cresc_15_dia end) Cresc_15_dia,
+			Tamanho_Atual - (case when Cresc_30_dia = 0 then Tamanho_Atual else Cresc_30_dia end) Cresc_30_dia,
+			Tamanho_Atual - (case when Cresc_60_dia = 0 then Tamanho_Atual else Cresc_60_dia end) Cresc_60_dia
+		from #CheckList_Table_Growth
+		where @Nm_Database = Nm_Database
+		and (Tamanho_Atual - (case when Cresc_1_dia = 0 then Tamanho_Atual else Cresc_1_dia end)) > 1 --Cresceu mais de 1 MB
+		order by Tamanho_Atual - (case when Cresc_1_dia = 0 then Tamanho_Atual else Cresc_1_dia end) desc
+		delete from @Databases where Nm_Database =  @Nm_Database 
+		
+	end
+	
+	 --select * from CheckList_Table_Growth
+	 if (select count(*) from CheckList_Table_Growth) = 0
+	insert into CheckList_Table_Growth( Nm_Servidor, Nm_Database,Nm_Tabela, Tamanho_Atual, Cresc_1_dia, Cresc_15_dia, Cresc_30_dia, Cresc_60_dia )
+		select 'Nenhuma Tabela cresceu mais de 0.2 GB.',null,null,null,null,null,null,null
+
+GO
+if OBJECT_ID('stpCheckList_Backups_Executados') is not null
+	drop procedure stpCheckList_Backups_Executados
+GO	
+	
+CREATE procedure stpCheckList_Backups_Executados
+AS
+
+	DECLARE @Dt_Referencia datetime
+	SELECT @Dt_Referencia = getdate()
+
+	truncate table CheckList_Backups_Executados
+	
+	insert into CheckList_Backups_Executados(Database_name,Name,Backup_start_date,Tempo_Min
+				,Position,Server_name,Recovery_model,Logical_device_name,Device_type
+				,Type,Tamanho_MB)
+	SELECT database_name, name,backup_start_date, datediff(mi,backup_start_date,backup_finish_date) [tempo (min)],
+		  position,server_name,recovery_model,
+		  isnull (logical_device_name,' ') logical_device_name,device_type,type, cast(backup_size/1024/1024 as numeric(15,2)) [Tamanho (MB)]
+	FROM msdb.dbo.backupset B
+		  INNER JOIN msdb.dbo.backupmediafamily BF ON B.media_set_id = BF.media_set_id
+	where backup_start_date >=  dateadd(hh, -24 ,@Dt_Referencia  )
+		  and type in ('D','I')
+				
+		  
+	if (select count(*) from CheckList_Backups_Executados) = 0
+	insert into CheckList_Backups_Executados(Database_name,Name,Backup_start_date,Tempo_Min
+				,Position,Server_name,Recovery_model,Logical_device_name,Device_type
+				,Type,Tamanho_MB)
+	select 'Não existe nenhum backup FULL ou Diferencial nas últimas 24 horas.',null,null,null,null,null,null,
+		'',null,null,null
+
+	GO
+	if OBJECT_ID('stpCheckList_Jobs_Failed') is not null
+		drop procedure stpCheckList_Jobs_Failed
+	GO
+		CREATE proc [dbo].[stpCheckList_Jobs_Failed]
+		as
+		
+			set nocount on
+			if object_id('tempdb..Result_History_Jobs') is not null
+				drop table #Result_History_Jobs
+		
+			create table #Result_History_Jobs(
+					  Cod int identity(1,1),
+					  Instance_Id int,
+					  Job_Id varchar(255),
+					  Job_Name varchar(255),
+					  Step_Id int,
+					  Step_Name varchar(255),
+					  SQl_Message_Id int,
+					  Sql_Severity int,
+					  SQl_Message varchar(4490),
+					  Run_Status int,
+					  Run_Date varchar(20),
+					  Run_Time varchar(20),
+					  Run_Duration int,
+					  Operator_Emailed varchar(100),
+					  Operator_NetSent varchar(100),
+					  Operator_Paged varchar(100),
+					  Retries_Attempted int,
+					  Nm_Server varchar(100)  
+				)
+		
+		
+			declare @hoje varchar (8)
+			declare @ontem varchar (8)
+			set @ontem  =  convert (varchar(8),(dateadd (day, -1, getdate())),112)
+			set  @hoje =  convert (varchar(8),getdate()+1,112)
+		
+			insert into #Result_History_Jobs
+			exec msdb.dbo.sp_help_jobhistory @mode = 'FULL' , @start_run_date =  @ontem      /*dia anterior*/
+		
+			/*Jobs FAILED*/	
+		
+			truncate table CheckList_Jobs_Failed
+			
+			insert into CheckList_Jobs_Failed([Server],[Job_Name],[Status],[Dt_Execucao],[Run_Duration],[SQL_Message])
+			select Nm_Server as [Server],Job_Name, case when Run_Status = 0 then 'Failed'
+										   when Run_Status = 1 then 'Succeeded'
+										   when Run_Status = 2 then 'Retry (step only)'
+										   when Run_Status = 3 then 'Cancelled'
+										   when Run_Status = 4 then 'In-progress message'
+										   when Run_Status = 5 then 'Unknown' end Status,
+				  cast(Run_Date + ' ' +
+				  right('00' + substring(Run_Time,(len(Run_Time)-5),2) ,2)+ ':' +
+				  right('00' + substring(Run_Time,(len(Run_Time)-3),2) ,2)+ ':' +
+				  right('00' + substring(Run_Time,(len(Run_Time)-1),2) ,2) as varchar) Dt_Execucao,
+				  right('00' + substring(cast(Run_Duration as varchar),(len(Run_Duration)-5),2) ,2)+ ':' +
+				  right('00' + substring(cast(Run_Duration as varchar),(len(Run_Duration)-3),2) ,2)+ ':' +
+				  right('00' + substring(cast(Run_Duration as varchar),(len(Run_Duration)-1),2) ,2)  Run_Duration,
+				  cast(SQl_Message as varchar(3990)) as [SQl_Message]
+			from #Result_History_Jobs 
+			where 
+				  cast(Run_Date + ' ' + right('00' + substring(Run_Time,(len(Run_Time)-5),2) ,2)+ ':' +
+				  right('00' + substring(Run_Time,(len(Run_Time)-3),2) ,2)+ ':' +
+				  right('00' + substring(Run_Time,(len(Run_Time)-1),2) ,2) as datetime) >= @ontem + ' 08:00' and  /*dia anterior no horário*/
+				  cast(Run_Date + ' ' + right('00' + substring(Run_Time,(len(Run_Time)-5),2) ,2)+ ':' +
+				  right('00' + substring(Run_Time,(len(Run_Time)-3),2) ,2)+ ':' +
+				  right('00' + substring(Run_Time,(len(Run_Time)-1),2) ,2) as datetime) < @hoje
+				  and Step_Id = 0
+				  and Run_Status <> 1
+			order by Dt_Execucao
+		
+			 
+			 if (select count(*) from CheckList_Jobs_Failed) = 0
+			insert into CheckList_Jobs_Failed([Server],[Job_Name],[Status],[Dt_Execucao],[Run_Duration],[SQL_Message])
+				select 'Nenhum job falhou essa noite.',null,null,null,null,null
+	GO
+if OBJECT_ID('stpCheckList_Alteracao_Jobs') is not null
+	drop procedure stpCheckList_Alteracao_Jobs
+GO	
+	CREATE procedure [dbo].[stpCheckList_Alteracao_Jobs]
+			AS
+			
+			declare @hoje varchar (8)
+			declare @ontem varchar (8)
+			set @ontem  =  convert (varchar(8),(dateadd (day, -1, getdate())),112)
+			set  @hoje =  convert (varchar(8),getdate() +1,112)
+		
+			truncate table CheckList_Alteracao_Jobs
+			
+			insert into CheckList_Alteracao_Jobs(Nm_Job,Fl_Habilitado,Dt_Criacao,Dt_Modificacao,Nr_Versao)
+			SELECT name, convert( smallint, enabled ) as Enabled , convert (smalldatetime, date_created) as Date_criacao , 
+				convert (smalldatetime, date_modified ) as Date_Modificacao, version_number
+			FROM msdb.dbo.sysjobs  sj     
+			where ( date_created >= @ontem and date_created < @hoje)    
+			 or (date_modified >= @ontem and date_modified < @hoje)
+			 
+			 if (select count(*) from CheckList_Alteracao_Jobs) = 0
+				insert into CheckList_Alteracao_Jobs(Nm_Job,Fl_Habilitado,Dt_Criacao,Dt_Modificacao,Nr_Versao)
+				select 'Nenhum job foi alterado de ontem para hoje.',null,null,null,null
+	
+GO
+if OBJECT_ID('stpCheckList_Job_Demorados') is not null
+	drop procedure stpCheckList_Job_Demorados
+GO	
+CREATE procedure [dbo].[stpCheckList_Job_Demorados]
+AS
+
+	if OBJECT_ID('tempdb..#Result_History_Jobs') is not null drop table #Result_History_Jobs
+	create table #Result_History_Jobs(
+		  Cod int identity(1,1),
+		  Instance_Id int,
+		  Job_Id varchar(255),
+		  Job_Name varchar(255),
+		  Step_Id int,
+		  Step_Name varchar(255),
+		  Sql_Message_Id int,
+		  Sql_Severity int,
+		  SQl_Message varchar(4490),
+		  Run_Status int,
+		  Run_Date varchar(20),
+		  Run_Time varchar(20),
+		  Run_Duration int,
+		  Operator_Emailed varchar(100),
+		  Operator_NetSent varchar(100),
+		  Operator_Paged varchar(100),
+		  Retries_Attempted int,
+		  Nm_Server varchar(100)  
+	) --select * from #Result_History_Jobs
+
+	
+	declare @ontem varchar (8)
+	set @ontem  =  convert (varchar(8),(dateadd (day, -1, getdate())),112)
+
+
+
+	insert into #Result_History_Jobs
+	exec msdb.dbo.sp_help_jobhistory @mode = 'FULL' , @start_run_date =  @ontem      -- '20081028' --dia anterior
+
+	truncate table CheckList_Job_Demorados
+	
+	insert into CheckList_Job_Demorados(Job_Name,Status,Dt_Execucao,Run_Duration,SQL_Message)
+	select Job_Name, case when Run_Status = 0 then 'Failed'
+								   when Run_Status = 1 then 'Succeeded'
+									when Run_Status = 2 then 'Retry (step only)'
+								   when Run_Status = 3 then 'Canceled'
+								   when Run_Status = 4 then 'In-progress message'
+								   when Run_Status = 5 then 'Unknown' end Status,
+		  cast(Run_Date + ' ' +
+		  right('00' + substring(Run_Time,(len(Run_Time)-5),2) ,2)+ ':' +
+		  right('00' + substring(Run_Time,(len(Run_Time)-3),2) ,2)+ ':' +
+		  right('00' + substring(Run_Time,(len(Run_Time)-1),2) ,2) as varchar) Dt_Execucao,
+		  right('00' + substring(cast(Run_Duration as varchar),(len(Run_Duration)-5),2) ,2)+ ':' +
+		  right('00' + substring(cast(Run_Duration as varchar),(len(Run_Duration)-3),2) ,2)+ ':' +
+		  right('00' + substring(cast(Run_Duration as varchar),(len(Run_Duration)-1),2) ,2)  Run_Duration,
+		  cast(SQl_Message as varchar(3990)) as [SQL_Message]	
+	from #Result_History_Jobs --where Job_name = 'Teste Fabricio'
+	where 
+		  cast(Run_Date + ' ' + right('00' + substring(Run_Time,(len(Run_Time)-5),2) ,2)+ ':' +
+		  right('00' + substring(Run_Time,(len(Run_Time)-3),2) ,2)+ ':' +
+		  right('00' + substring(Run_Time,(len(Run_Time)-1),2) ,2) as datetime) >= GETDATE() -1 and
+		  cast(Run_Date + ' ' + right('00' + substring(Run_Time,(len(Run_Time)-5),2) ,2)+ ':' +
+		  right('00' + substring(Run_Time,(len(Run_Time)-3),2) ,2)+ ':' +
+		  right('00' + substring(Run_Time,(len(Run_Time)-1),2) ,2) as datetime) < GETDATE() 
+		  and Step_Id = 0
+		  and Run_Status = 1
+		  and Run_Duration >= 100  -- jobs que demoraram mais de 1 minuto
+	order by Run_Duration desc
+
+if @@ROWCOUNT = 0
+		insert into CheckList_Job_Demorados(Job_Name,Status,Dt_Execucao,Run_Duration,SQL_Message)
+		select 'Sem job', '','','',''
+
+
+
+GO
+	if OBJECT_ID('stpCheckList_Traces_Queries') is not null
+	drop procedure stpCheckList_Traces_Queries
+GO
+
+CREATE procedure [dbo].[stpCheckList_Traces_Queries]
+as
+	declare @Dt_Referencia datetime
+	set @Dt_Referencia = cast(floor(cast(GETDATE()-1 as float)) as datetime)
+
+	select TextData, NTUserName, HostName, ApplicationName, LoginName, SPID, Duration, StartTime, EndTime, ServerName, Reads, Writes, CPU, DataBaseName, RowCounts, SessionLoginName
+	into #Temp_Result
+	from Traces..Traces (nolock)
+	where StartTime >= dateadd(hh,+8,@Dt_Referencia)
+		  and StartTime < dateadd(hh,+23,@Dt_Referencia)   
+	order by Duration desc
+	
+	delete from CheckList_Traces_Queries
+
+	select top 10 cast(TextData as CHAR(400)) PrefixoQuery,  COUNT(*) AS QTD, SUM(Duration) AS Total, 
+		AVG(Duration) AS Media, MIN(Duration) AS Menor, MAX(Duration) AS Maior,  
+		SUM(Writes) AS Writes,  SUM(CPU) AS CPU
+	into #Top10
+	from #Temp_Result
+	group by cast(TextData as CHAR(400)) 
+	order by 2 desc
+		
+	insert into CheckList_Traces_Queries( PrefixoQuery,QTD,Total,Media,Menor,Maior,Writes,CPU,Ordem)
+	select PrefixoQuery,QTD,Total,Media,Menor,Maior,Writes,CPU ,1
+	from #Top10
+	order by 2
+	
+	insert into CheckList_Traces_Queries( PrefixoQuery,QTD,Total,Media,Menor,Maior,Writes,CPU,Ordem)
+	select 'Outras' PrefixoQuery,  COUNT(*) AS QTD, SUM(Duration) AS Total, 
+		AVG(Duration) AS Media, MIN(Duration) AS Menor, MAX(Duration) AS Maior,  
+		SUM(Writes) AS Writes,  SUM(CPU) AS CPU,2
+	from #Temp_Result A		
+	where cast(TextData as CHAR(400)) not in (select PrefixoQuery from #Top10)
+
+	insert into CheckList_Traces_Queries( PrefixoQuery,QTD,Total,Media,Menor,Maior,Writes,CPU,Ordem)	
+	select 'TOTAL', sum(QTD),sum(Total),avg(Media),MIN(Menor) AS Menor, MAX(Maior) AS Maior,  
+		SUM(Writes) AS Writes,  SUM(CPU) AS CPU,3
+	from CheckList_Traces_Queries
+	
+GO
+	if OBJECT_ID('stpCheckList_Contadores') is not null
+	drop procedure stpCheckList_Contadores
+GO
+
+CREATE procedure stpCheckList_Contadores
+as
+	delete from CheckList_Contadores
+
+	declare @Dt_Referencia datetime
+	set @Dt_Referencia = cast(floor(cast(GETDATE()-1 as float)) as datetime)
+
+
+	INSERT INTO CheckList_Contadores(Hora,Nm_Contador,Media)
+	SELECT DATEPART(hh,Dt_Log) Hora,Nm_Contador,AVG(Valor) Media
+	FROM dbo.Registro_Contador A
+		JOIN dbo.Contador B ON A.Id_Contador = B.Id_Contador
+	WHERE Dt_Log >= dateadd(hh,+8,@Dt_Referencia)  and Dt_Log < dateadd(hh,+21,@Dt_Referencia)   
+	GROUP BY DATEPART(hh,Dt_Log),Nm_Contador
+	ORDER BY 2,1,3
+
+	if @@ROWCOUNT = 0
+		INSERT INTO CheckList_Contadores(Hora,Nm_Contador,Media)
+		select '','',''
+		
+
+
+GO	
+	if OBJECT_ID('stpCheckList_SQLServer_ErrorLog') is not null
+	drop procedure stpCheckList_SQLServer_ErrorLog
+GO
+
+Create procedure stpCheckList_SQLServer_ErrorLog
+AS
+
+	if OBJECT_ID('tempdb..#TempLog') is not null drop table #TempLog
+	
+	CREATE TABLE #TempLog (
+		  LogDate     DATETIME,
+		  ProcessInfo NVARCHAR(50),
+		  [Text] NVARCHAR(MAX))
+
+	if OBJECT_ID('tempdb..#logF') is not null drop table #logF
+	
+	CREATE TABLE #logF (
+		  ArchiveNumber     INT,
+		  LogDate           DATETIME,
+		  LogSize           INT )
+
+	-- Seleciona o número de arquivos.
+	INSERT INTO #logF  
+	EXEC sp_enumerrorlogs
+
+	delete from #logF
+	where LogDate < getdate()-2
+
+	DECLARE @TSQL  NVARCHAR(2000)
+	DECLARE @lC    INT
+
+	SELECT @lC = MIN(ArchiveNumber) FROM #logF
+
+	--Loop para realizar a leitura de todo o log
+	WHILE @lC IS NOT NULL
+	BEGIN
+		  INSERT INTO #TempLog
+		  EXEC sp_readerrorlog @lC
+		  SELECT @lC = MIN(ArchiveNumber) FROM #logF
+		  WHERE ArchiveNumber > @lC
+	END
+	
+	truncate table CheckList_SQLServer_ErrorLog
+	
+	insert into CheckList_SQLServer_ErrorLog(Dt_Log,ProcessInfo,Text)
+	select LogDate, ProcessInfo,Text
+	from #TempLog
+	where LogDate >= getdate()-1
+		and ProcessInfo <> 'Backup'
+		and Text not like '%CHECKDB%'
+		and Text not like '%Trace%'
+		and Text not like '%IDR%'
+GO
+	if OBJECT_ID('stpCheckList_Waits_Stats') is not null
+	drop procedure stpCheckList_Waits_Stats
+GO
+
+CREATE PROCEDURE stpCheckList_Waits_Stats
+AS
+	declare @Dt_Referencia datetime,@Dt_Inicio datetime, @Dt_Fim datetime
+	set @Dt_Referencia = cast(floor(cast(GETDATE()-1 as float)) as datetime)
+	
+	select @Dt_Inicio = dateadd(hh,+8,@Dt_Referencia), @Dt_Fim = dateadd(hh,+23,@Dt_Referencia)   
+
+	delete from CheckList_Waits_Stats
+
+	insert into CheckList_Waits_Stats(WaitType,Min_Log,Max_Log,DIf_Wait_S,DIf_Resource_S,DIf_Signal_S,DIf_WaitCount,DIf_Percentage,Last_Percentage)
+	exec [stpHistorico_Waits_Stats] @Dt_Inicio,  @Dt_Fim
+
+	delete from CheckList_Waits_Stats
+	where Last_Percentage < 1
+	
+	 if (select count(*) from CheckList_Waits_Stats) = 0
+			insert into CheckList_Waits_Stats(WaitType,Min_Log,Max_Log,DIf_Wait_S,DIf_Resource_S,DIf_Signal_S,DIf_WaitCount,DIf_Percentage,Last_Percentage)
+				select 'Sem informações de wait para esse dia.',null,null,null,null,null,null,null,null
+
+
+GO
+if OBJECT_ID('stpCheckList_Fragmentacao_Indices') is not null
+	drop procedure stpCheckList_Fragmentacao_Indices
+GO
+
+
+CREATE procedure [dbo].[stpCheckList_Fragmentacao_Indices]
+as
+	declare @Max_Dt_Referencia datetime
+
+	select @Max_Dt_Referencia = MAX(Dt_Referencia) from vwHistorico_Fragmentacao_Indice
+
+	delete from CheckList_Fragmentacao_Indices
+	
+	insert into CheckList_Fragmentacao_Indices(Dt_Referencia, Nm_Servidor, Nm_Database, Nm_Tabela, Nm_Indice, Avg_Fragmentation_In_Percent, Page_Count, Fill_Factor, Fl_Compressao)
+	select Dt_Referencia, Nm_Servidor, Nm_Database, Nm_Tabela, Nm_Indice, Avg_Fragmentation_In_Percent, Page_Count, Fill_Factor, Fl_Compressao
+	from vwHistorico_Fragmentacao_Indice
+	where cast(floor(cast(Dt_Referencia as float)) as datetime) = cast(floor(cast(@Max_Dt_Referencia as float)) as datetime)
+	and Avg_Fragmentation_In_Percent > 5
+		and Page_Count > 1000	
+	order by Avg_Fragmentation_In_Percent desc
+	
+	 if (select count(*) from CheckList_Fragmentacao_Indices) = 0
+	insert into CheckList_Fragmentacao_Indices(Dt_Referencia, Nm_Servidor, Nm_Database, Nm_Tabela, 
+	Nm_Indice, Avg_Fragmentation_In_Percent, Page_Count, Fill_Factor, Fl_Compressao)
+	select null,'Não existe nenhum índice com mais de 5% de Fragmentação',null,null,null,null,null,null,null
+
+

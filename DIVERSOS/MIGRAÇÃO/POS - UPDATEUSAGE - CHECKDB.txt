@@ -1,0 +1,5 @@
+-- Executar apenas para bases até 50 GB:  
+DBCC UPDATEUSAGE(NomeDatabase);
+
+--
+DBCC CHECKDB (NomeDatabase)

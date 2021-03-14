@@ -1,0 +1,53 @@
+--rodar no 01
+ALTER AVAILABILITY GROUP [AlwaysOnAG_2014] 
+MODIFY REPLICA ON 'SQLAVG01' WITH (SECONDARY_ROLE(ALLOW_CONNECTIONS = NO))
+
+ALTER AVAILABILITY GROUP [AlwaysOnAG_2014] 
+MODIFY REPLICA ON 'SQLAVG02' WITH (SECONDARY_ROLE(ALLOW_CONNECTIONS = NO))
+----
+--rodar nas duas máquinas
+ALTER DATABASE Teste 
+MODIFY FILE (NAME='Teste',FILENAME='C:\SQL\Bases\Teste.mdf')
+go
+ALTER DATABASE Teste 
+MODIFY FILE (NAME='Teste_2',FILENAME='C:\SQL\Bases\Teste_2.ndf')
+go
+ALTER DATABASE Teste 
+MODIFY FILE (NAME='Teste_3',FILENAME='C:\SQL\Bases\Teste_3.ndf')
+go
+ALTER DATABASE Teste 
+MODIFY FILE (NAME='Teste_log',FILENAME='C:\SQL\Bases\Teste_log.ldf') 
+
+--rodar no secundário (nesse momento a base fica online no secundário)
+ALTER AVAILABILITY GROUP AlwaysOnAG_2014 FAILOVER;
+
+--move os arquivos no servidor principal
+Copiar os arquivos
+
+--inicia o database recovery
+ALTER DATABASE Teste SET ONLINE
+
+--gera o erro
+Msg 5181, Level 16, State 5, Line 29
+Could not restart database "Teste". Reverting to the previous status.
+Msg 5069, Level 16, State 1, Line 29
+ALTER DATABASE statement failed.
+Msg 35278, Level 17, State 1, Line 29
+Availability database 'Teste', which is in the secondary role, is being restarted to resynchronize with the current primary database. This is an informational message only. No user action is required.
+Msg 0, Level 20, State 0, Line 28
+A severe error occurred on the current command.  The results, if any, should be discarded.
+
+--Faz o failover
+ALTER AVAILABILITY GROUP AlwaysOnAG_2014 FAILOVER;
+
+--alterar o arquivo no secundário
+
+--deixar a base online no secundário
+ALTER DATABASE TESTE SET ONLINE
+
+--rodar no 01
+ALTER AVAILABILITY GROUP [AlwaysOnAG_2014] 
+MODIFY REPLICA ON 'SQLAVG01' WITH (SECONDARY_ROLE(ALLOW_CONNECTIONS = ALL))
+
+ALTER AVAILABILITY GROUP [AlwaysOnAG_2014] 
+MODIFY REPLICA ON 'SQLAVG02' WITH (SECONDARY_ROLE(ALLOW_CONNECTIONS = ALL))

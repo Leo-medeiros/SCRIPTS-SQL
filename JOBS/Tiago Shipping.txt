@@ -1,0 +1,282 @@
+-----------------------------------------------------------------------------
+-- CRIAR NA PRODUCAO
+-----------------------------------------------------------------------------
+
+
+-----------------------------------------------------------------------------
+-- CRIAR NO MIRROR 
+-----------------------------------------------------------------------------
+
+USE [Traces]
+GO
+/****** Object:  StoredProcedure [dbo].[stpRestauraBancos]    Script Date: 5/8/2019 2:26:59 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+/*
+OBJETIVO: PROCEDURE UTILIZADA PARA FAZER O RESTORE DOS BACKUPS FULL E LOG NO SERVIDOR SECUNDÁRIO
+
+-- TESTE EXECUÇÃO:
+EXEC [dbo].[stpRestauraBancos] 'AARIM'
+*/
+
+CREATE PROCEDURE [dbo].[stpRestauraBancos]
+    @dbname sysname    
+AS
+BEGIN
+	/*
+	-- P/ TESTE
+	DECLARE @dbname sysname = 'AARIM'
+	*/
+	
+	------------------------------------------------------------------------------------------------------------
+    -- Declara as variaveis
+	------------------------------------------------------------------------------------------------------------
+    DECLARE @caminho VARCHAR(MAX),
+	        @mdf VARCHAR(MAX),
+            @mdf_name sysname,
+            @ldf VARCHAR(MAX),
+            @ldf_name sysname,
+			@Dt_Backup DATETIME,
+			@Last_LSN_Backup_FULL NUMERIC(25,0),
+			@Last_LSN_Backup_LOG NUMERIC(25,0),
+			@caminho_log VARCHAR(MAX);
+
+	------------------------------------------------------------------------------------------------------------
+    -- Recuperar caminho dos arquivos mdf em [172.31.2.71]
+	------------------------------------------------------------------------------------------------------------
+    SELECT @mdf = physical_name,
+           @mdf_name = mf.name
+    FROM [172.31.2.71].master.sys.master_files mf
+    INNER JOIN [172.31.2.71].master.sys.databases db ON mf.database_id = db.database_id
+    WHERE mf.type = 0	-- 0 = Rows. (Includes files of full-text catalogs that are upgraded to or created in SQL Server 2014.) 
+          AND db.name = @dbname;
+	
+	------------------------------------------------------------------------------------------------------------
+	-- Recuperar caminho dos arquivos ldf em [172.31.2.71]
+	------------------------------------------------------------------------------------------------------------
+    SELECT @ldf = physical_name,
+           @ldf_name = mf.name
+    FROM [172.31.2.71].master.sys.master_files mf
+    INNER JOIN [172.31.2.71].master.sys.databases db ON mf.database_id = db.database_id
+    WHERE mf.type = 1	-- 1 = Log 
+          AND db.name = @dbname;
+
+	-- SELECT @mdf,@mdf_name,@ldf,@ldf_name
+
+	------------------------------------------------------------------------------------------------------------
+	-- Restaurar Backup FULL
+	------------------------------------------------------------------------------------------------------------
+	-- Verifica se possui algum Backup Full pendente para a base na tabela de controle    
+    SELECT 
+		@caminho = REPLACE(Ds_Diretorio,SUBSTRING(Ds_Diretorio,1,3),'\\Cmcorp-bd01\f$\'),
+		@Dt_Backup = Dt_Backup
+    FROM [172.31.2.71].Traces.dbo.Controle_BKP
+    WHERE	Tipo_BKP = 'D'
+            AND Fl_Restore = 0
+            AND Nm_Database = @dbname    
+
+	-- SELECT @caminho, @Dt_Backup
+
+	-- Executa o Restore FULL
+	IF ( @caminho IS NOT NULL )
+	BEGIN
+        RESTORE DATABASE @dbname
+        FROM DISK = @caminho
+        WITH	
+			FILE = 1,
+            MOVE @mdf_name TO @mdf,
+            MOVE @ldf_name TO @ldf,
+            NORECOVERY,
+            NOUNLOAD,
+            REPLACE;
+
+		-- Se nao der nenhum erro, atualiza a tabela de controle do restore
+        IF @@ERROR = 0
+        BEGIN
+			SET @caminho = replace(@caminho,substring(@caminho,0,18),'F:\')
+
+            UPDATE [172.31.2.71].Traces.dbo.Controle_BKP
+            SET Fl_Restore = 1
+            WHERE Ds_Diretorio = @caminho
+
+			PRINT '>>>Backup Full restaurado: ' + @caminho;
+
+			------------------------------------------------------------------------------------------------------------
+			-- TRATAMENTO: BACKUP FULL COM LAST_LSN MENOR QUE O BACKUP DE LOG ANTERIOR, OU SEJA, O BACKUP DE LOG TERMINOU DEPOIS DO BACKUP FULL E TAMBEM DEVE SER RESTAURADO APOS O FULL
+			-- OBS: O BACKUP DE LOG ANTERIOR NAO VAI ESTAR NA TABELA DE CONTROLE DO RESTORE
+			------------------------------------------------------------------------------------------------------------
+			-- Busca o ID e o last_lsn do Backup FULL
+			SELECT @Last_LSN_Backup_FULL = last_lsn
+			FROM [172.31.2.71].[msdb].[dbo].[backupset]
+			WHERE database_name = @dbname
+				AND name = @caminho
+				AND type = 'D'	-- FULL
+				AND backup_start_date = @Dt_Backup
+
+			-- Busca o ID e o last_lsn do Backup LOG
+			SELECT TOP 1 
+				@Last_LSN_Backup_LOG = last_lsn,
+				@caminho_log = '\\Cmcorp-bd01\f$\SQLServer\Backup\Log\' + @dbname + '\' + name + '.trn'
+			FROM [172.31.2.71].[msdb].[dbo].[backupset]
+			WHERE database_name = @dbname
+				AND type = 'L'	-- LOG
+				AND backup_start_date <= @Dt_Backup
+			ORDER BY backup_start_date DESC
+
+			-- SELECT @Last_LSN_Backup_FULL Last_LSN_Backup_FULL, @Last_LSN_Backup_LOG Last_LSN_Backup_LOG, @caminho_log caminho_log
+
+			-- BACKUP FULL COM LAST_LSN MENOR QUE O BACKUP DE LOG ANTERIOR, OU SEJA, O BACKUP DE LOG TERMINOU DEPOIS DO BACKUP FULL E TAMBEM DEVE SER RESTAURADO APOS O FULL
+			IF ( @Last_LSN_Backup_FULL < @Last_LSN_Backup_LOG)
+			BEGIN
+				RESTORE LOG @dbname
+				FROM DISK = @caminho_log
+				WITH 
+					FILE = 1,
+					NORECOVERY,
+					NOUNLOAD
+
+				IF @@ERROR = 0
+				BEGIN
+					PRINT '>>> Backup de Log restaurado: ' + @caminho_log;
+				END
+				ELSE		-- Caso de algum erro
+				BEGIN
+					PRINT '>>> FALHA no Backup de Log: ' + @caminho_log;			
+				END 
+			END
+        END
+		ELSE		-- Caso de algum erro
+		BEGIN
+			PRINT '>>> FALHA no Backup Full: ' + @caminho;			
+		END    
+	END    
+
+	------------------------------------------------------------------------------------------------------------
+	-- Restaurar Backups de LOG
+	------------------------------------------------------------------------------------------------------------	
+    -- Declara, preenche e inicia o CURSOR
+	DECLARE cursor_backup_files CURSOR FOR
+    SELECT replace(Ds_Diretorio,substring(Ds_Diretorio,1,3),'\\Cmcorp-bd01\f$\')
+    FROM [172.31.2.71].Traces.dbo.Controle_BKP
+    WHERE 
+		Tipo_BKP = 'L'
+        AND Fl_Restore = 0
+        AND Nm_Database = @dbname
+	ORDER BY Dt_Backup;
+
+    OPEN cursor_backup_files;
+
+    FETCH NEXT FROM cursor_backup_files
+    INTO @caminho;
+
+	-- Restaura os Backups de LOG
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        RESTORE LOG @dbname
+        FROM DISK = @caminho
+        WITH 
+			FILE = 1,
+            NORECOVERY,
+            NOUNLOAD
+
+		-- SET @caminho = replace(@caminho,substring(@caminho,0,18),'F:\')
+
+		-- Se nao der nenhum erro, atualiza a tabela de controle do restore
+        IF @@ERROR = 0
+        BEGIN
+            UPDATE [172.31.2.71].Traces.dbo.Controle_BKP
+            SET Fl_Restore = 1
+            WHERE Ds_Diretorio = replace(@caminho,substring(@caminho,0,18),'F:\');
+        END;
+
+        PRINT '>>>Backup de Log restaurado: ' + @caminho;
+
+		-- Vai para o proximo registro do cursor
+        FETCH NEXT FROM cursor_backup_files
+        INTO @caminho;
+    END;
+
+	-- Destroi o cursor
+    CLOSE cursor_backup_files;
+    DEALLOCATE cursor_backup_files;
+END;
+
+GO
+
+USE [msdb]
+GO
+
+/****** Object:  Job [DBA - RESTORE DIARIO]    Script Date: 5/8/2019 2:28:08 PM ******/
+BEGIN TRANSACTION
+DECLARE @ReturnCode INT
+SELECT @ReturnCode = 0
+/****** Object:  JobCategory [Database Maintenance]    Script Date: 5/8/2019 2:28:08 PM ******/
+IF NOT EXISTS (SELECT name FROM msdb.dbo.syscategories WHERE name=N'Database Maintenance' AND category_class=1)
+BEGIN
+EXEC @ReturnCode = msdb.dbo.sp_add_category @class=N'JOB', @type=N'LOCAL', @name=N'Database Maintenance'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+
+END
+
+DECLARE @jobId BINARY(16)
+EXEC @ReturnCode =  msdb.dbo.sp_add_job @job_name=N'DBA - RESTORE DIARIO', 
+		@enabled=1, 
+		@notify_level_eventlog=0, 
+		@notify_level_email=2, 
+		@notify_level_netsend=0, 
+		@notify_level_page=0, 
+		@delete_level=0, 
+		@description=N'No description available.', 
+		@category_name=N'Database Maintenance', 
+		@owner_login_name=N'DATACENTER\dbmirror', 
+		@notify_email_operator_name=N'Alerta_BD', @job_id = @jobId OUTPUT
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+/****** Object:  Step [Restore]    Script Date: 5/8/2019 2:28:08 PM ******/
+EXEC @ReturnCode = msdb.dbo.sp_add_jobstep @job_id=@jobId, @step_name=N'Restore', 
+		@step_id=1, 
+		@cmdexec_success_code=0, 
+		@on_success_action=1, 
+		@on_success_step_id=0, 
+		@on_fail_action=2, 
+		@on_fail_step_id=0, 
+		@retry_attempts=0, 
+		@retry_interval=0, 
+		@os_run_priority=0, @subsystem=N'TSQL', 
+		@command=N'exec stpRestauraBancos ''Advogado''
+exec stpRestauraBancos ''ARAME'' 
+exec stpRestauraBancos ''AFADV''
+exec stpRestauraBancos ''BASEMODEL''
+exec stpRestauraBancos ''BEBHOTELS''
+exec stpRestauraBancos ''BHOTEL''', 
+		@database_name=N'Traces', 
+		@output_file_name=N'C:\LOG - JOB DBA - RESTORE DIARIO', 
+		@flags=8
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_update_job @job_id = @jobId, @start_step_id = 1
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobschedule @job_id=@jobId, @name=N'DIARIO', 
+		@enabled=1, 
+		@freq_type=4, 
+		@freq_interval=1, 
+		@freq_subday_type=4, 
+		@freq_subday_interval=10, 
+		@freq_relative_interval=0, 
+		@freq_recurrence_factor=0, 
+		@active_start_date=20180615, 
+		@active_end_date=99991231, 
+		@active_start_time=33500, 
+		@active_end_time=3559, 
+		@schedule_uid=N'12a23efd-28a5-45d1-ae3c-960d2ffa5c86'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+EXEC @ReturnCode = msdb.dbo.sp_add_jobserver @job_id = @jobId, @server_name = N'(local)'
+IF (@@ERROR <> 0 OR @ReturnCode <> 0) GOTO QuitWithRollback
+COMMIT TRANSACTION
+GOTO EndSave
+QuitWithRollback:
+    IF (@@TRANCOUNT > 0) ROLLBACK TRANSACTION
+EndSave:
+
+GO

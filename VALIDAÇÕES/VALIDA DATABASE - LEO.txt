@@ -1,0 +1,26 @@
+/* QUERY VALIDA STATUS SERVIDOR, FUNCIONA APENAS EM SQL SERVER 2008 PARA CIMA
+DESENVOLVIDA POR LEONARDO MEDEIROS*/
+
+-- VALIDADOR STATUS INSTANCE 
+SELECT SERVERPROPERTY('Servername') [Instance_name], 
+	   SERVERPROPERTY('Isclustered') [IsClustered],
+	   SERVERPROPERTY('ComputerNamePhysicalNetBIOS')  [ActiveNode],
+	   SERVERPROPERTY('Edition') [Edition],   
+	   login_time [Startup_date],
+	   GETDATE() [Data_atual],
+	   'Instance no AR a'+' '+ CONVERT(VARCHAR(8),DATEDIFF(HOUR,login_time, GETDATE())) + ' '+'Horas' [Status]
+FROM SYS.SYSPROCESSES
+WHERE SPID= 1
+
+/*QUERY VALIDA STATUS DATABASES */
+SELECT  NAME [DATABASE_NAME],
+		CASE is_read_only
+		WHEN 0 THEN 'FALSE'
+		WHEN 1 THEN 'TRUE'
+		END 'READ_WRITE',
+		state_desc [Status],
+		recovery_model_desc [RECOVERY MODEL]
+FROM SYS.DATABASES
+
+
+
